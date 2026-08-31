@@ -7,6 +7,7 @@
     --tint: 255, 224, 130;   /* default: yellow */
     --opacity: 0.85;
     --font-size: 15px;
+    --mono-font: ui-monospace, "SF Mono", "Fira Code", Consolas, "Cascadia Code", monospace;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -64,7 +65,7 @@
   body.dark #pin.active { background: rgba(255,255,255,0.18); }
 
   /* Monospace toggle: dim when off so the on-state matches pin. */
-  #mono { opacity: 0.4; font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 13px; }
+  #mono { opacity: 0.4; font-family: var(--mono-font); font-size: 13px; }
   #mono.active { opacity: 1; background: rgba(0,0,0,0.12); }
   body.dark #mono.active { background: rgba(255,255,255,0.18); }
 
@@ -143,7 +144,7 @@
     font-family: inherit;
   }
   .note.mono textarea {
-    font-family: ui-monospace, "SF Mono", "Fira Code", Consolas, "Cascadia Code", monospace;
+    font-family: var(--mono-font);
   }
   textarea::placeholder { color: rgba(0,0,0,0.35); }
 

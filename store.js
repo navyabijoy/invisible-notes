@@ -52,7 +52,8 @@ function migrate(data) {
   }
   if (data.version === 2) {
     // v2 -> current: backfill pinned:true so existing notes keep today's
-    // always-on-top behavior unchanged, plus monospace:false.
+    // always-on-top behavior unchanged. Monospace defaults to off unless
+    // the record already has it set.
     return {
       version: STORE_VERSION,
       notes: data.notes.map((n) => ({
