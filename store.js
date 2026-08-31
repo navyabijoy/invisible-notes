@@ -62,48 +62,98 @@ class NoteStore {
   // onCorrupted(backupPath) and onWriteError(error) are optional hooks so the
   // caller (main.js) can surface a friendly, non-technical notice — this
   // module has no Electron dependency and never shows UI itself.
-  constructor(userDataPath, { onCorrupted, onWriteError } = {}) {
+  //
+  // `codec` is an optional `{ encrypt(string) -> Buffer, decrypt(Buffer) -> string }`
+  // pair that encrypts the file's bytes at rest (typically Electron's
+  // safeStorage). When provided, writes are encrypted and reads are decrypted.
+  // When omitted (e.g. OS-level encryption unavailable), notes are stored as
+  // plaintext — matching the original behavior.
+  constructor(userDataPath, { onCorrupted, onWriteError, codec } = {}) {
     this.filePath = path.join(userDataPath, 'notes.json');
     this.tmpPath = this.filePath + '.tmp';
     this.backupPath = this.filePath + '.corrupt';
     this.onCorrupted = onCorrupted;
     this.onWriteError = onWriteError;
-    this.data = this._load();
+    this.codec = codec || null;
+    const { data, migrated } = this._load();
+    this.data = data;
     this._saveTimer = null;
+    if (migrated && this.codec) {
+      // A legacy plaintext file was loaded while encryption is now enabled —
+      // re-encrypt it immediately so plaintext doesn't linger on disk.
+      this._writeNow();
+    }
   }
 
+  // Returns { data, migrated } where `migrated` indicates a legacy plaintext
+  // file was found while a codec is enabled (and should be re-encrypted).
   _load() {
     let raw;
     try {
-      raw = fs.readFileSync(this.filePath, 'utf8');
+      raw = fs.readFileSync(this.filePath); // Buffer
     } catch (_) {
-      return { version: STORE_VERSION, notes: [] };
+      return { data: { version: STORE_VERSION, notes: [] }, migrated: false };
     }
-    try {
-      const parsed = JSON.parse(raw);
-      if (!parsed || parsed.version !== STORE_VERSION) {
-        // About to run a schema migration — snapshot the pre-migration file
-        // first so a bug in migrate() can never be the only copy of the data.
-        try {
-          fs.writeFileSync(this.filePath + `.pre-migration-v${parsed && parsed.version || 1}`, raw);
-        } catch (_) {}
-      }
-      return migrate(parsed);
-    } catch (e) {
-      // Corrupted file: preserve it for inspection, never destroy silently
-      // by overwriting, start fresh so the app still boots.
+
+    // 1) Encryption enabled: try to decrypt the file first.
+    if (this.codec) {
       try {
-        fs.writeFileSync(this.backupPath, raw);
-      } catch (_) {}
-      console.error('notes.json was corrupted, backed up to', this.backupPath, e);
-      if (this.onCorrupted) this.onCorrupted(this.backupPath);
-      return { version: STORE_VERSION, notes: [] };
+        const plain = this.codec.decrypt(raw);
+        let parsed = null;
+        try {
+          parsed = JSON.parse(plain);
+        } catch (_) {}
+        if (parsed) {
+          return { data: this._parseAndMigrate(parsed, raw), migrated: false };
+        }
+      } catch (_) {
+        // Decryption failed — the file is probably a legacy plaintext file
+        // saved before encryption was enabled. Fall through and migrate it.
+      }
     }
+
+    // 2) Legacy plaintext JSON (or an unreadable/corrupted file).
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw.toString('utf8'));
+    } catch (_) {
+      return { data: this._corrupt(raw), migrated: false };
+    }
+    return { data: this._parseAndMigrate(parsed, raw), migrated: !!this.codec };
+  }
+
+  _parseAndMigrate(parsed, raw) {
+    if (!parsed || parsed.version !== STORE_VERSION) {
+      // About to run a schema migration — snapshot the pre-migration file
+      // first so a bug in migrate() can never be the only copy of the data.
+      try {
+        fs.writeFileSync(this.filePath + `.pre-migration-v${(parsed && parsed.version) || 1}`, raw);
+      } catch (_) {}
+    }
+    return migrate(parsed);
+  }
+
+  _corrupt(raw) {
+    // Preserve the bad file for inspection, never destroy it silently by
+    // overwriting; start fresh so the app still boots.
+    try {
+      fs.writeFileSync(this.backupPath, raw);
+    } catch (_) {}
+    console.error('notes.json was corrupted, backed up to', this.backupPath);
+    if (this.onCorrupted) this.onCorrupted(this.backupPath);
+    return { version: STORE_VERSION, notes: [] };
   }
 
   _writeNow() {
+    let out;
+    if (this.codec) {
+      // safeStorage.encryptString returns a Buffer; write it as-is.
+      out = this.codec.encrypt(JSON.stringify(this.data));
+    } else {
+      out = Buffer.from(JSON.stringify(this.data, null, 2), 'utf8');
+    }
     try {
-      fs.writeFileSync(this.tmpPath, JSON.stringify(this.data, null, 2));
+      fs.writeFileSync(this.tmpPath, out);
       fs.renameSync(this.tmpPath, this.filePath);
     } catch (e) {
       console.error('Failed to save notes:', e);
