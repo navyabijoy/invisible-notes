@@ -4,10 +4,36 @@
 const fs = require('fs');
 const path = require('path');
 
-const STORE_VERSION = 4;
+const STORE_VERSION = 6;
+
+// Every install has at least one workspace and it can never be deleted, so a
+// fixed id keeps migrations and the "where do orphaned notes go" fallback
+// simple, with no lookup needed to find a guaranteed-valid destination.
+const DEFAULT_WORKSPACE_ID = 'ws-default';
+const DEFAULT_WORKSPACE_NAME = 'Default';
+const MAX_WORKSPACE_NAME_LENGTH = 40;
 
 function nextId() {
   return 'note-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6);
+}
+
+function nextWorkspaceId() {
+  return 'ws-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6);
+}
+
+// Workspace names are shown in a tray menu, where a newline or an
+// over-long string would break the layout, so normalize at the boundary.
+function sanitizeWorkspaceName(input) {
+  if (typeof input !== 'string') return '';
+  return input.replace(/[\r\n]+/g, ' ').trim().slice(0, MAX_WORKSPACE_NAME_LENGTH);
+}
+
+function defaultWorkspace(overrides = {}) {
+  return {
+    id: overrides.id || nextWorkspaceId(),
+    name: sanitizeWorkspaceName(overrides.name) || 'Untitled workspace',
+    createdAt: overrides.createdAt || Date.now()
+  };
 }
 
 function defaultRecord(overrides = {}) {
@@ -26,6 +52,9 @@ function defaultRecord(overrides = {}) {
     fontSize: overrides.fontSize || 15,
     // Per-note monospace toggle for code walkthroughs (issue #7).
     monospace: !!overrides.monospace,
+    // Which workspace this note belongs to (issue #8). Independent of
+    // `visible`. See the note on effective visibility below.
+    workspaceId: overrides.workspaceId || DEFAULT_WORKSPACE_ID,
     ghost: !!overrides.ghost,
     visible: overrides.visible !== undefined ? !!overrides.visible : true,
     // Pinned = always-on-top, survives switching focus to another app.
@@ -36,41 +65,97 @@ function defaultRecord(overrides = {}) {
   };
 }
 
+function emptyStore() {
+  const workspace = defaultWorkspace({
+    id: DEFAULT_WORKSPACE_ID,
+    name: DEFAULT_WORKSPACE_NAME
+  });
+  return {
+    version: STORE_VERSION,
+    settings: { activeWorkspace: workspace.id },
+    workspaces: [workspace],
+    notes: []
+  };
+}
+
+// Guarantees the workspace invariants the rest of the app relies on:
+//   1. at least one workspace always exists,
+//   2. every note points at a workspace that exists,
+//   3. settings.activeWorkspace points at a workspace that exists.
+// Applied to every load, not just migrations, so a hand-edited or
+// partially-written file can't leave notes stranded in a workspace that
+// isn't in the dropdown, which would make them unreachable from the UI.
+function normalizeWorkspaces(data) {
+  // Drop malformed entries and duplicate ids. A duplicate id would put two
+  // identical-looking options in the dropdown while only one of them could
+  // ever be selected, and would make note membership ambiguous.
+  const seenIds = new Set();
+  let workspaces = [];
+  for (const w of Array.isArray(data.workspaces) ? data.workspaces : []) {
+    if (!w || typeof w.id !== 'string' || seenIds.has(w.id)) continue;
+    seenIds.add(w.id);
+    workspaces.push(defaultWorkspace(w));
+  }
+
+  if (workspaces.length === 0) {
+    workspaces = [defaultWorkspace({ id: DEFAULT_WORKSPACE_ID, name: DEFAULT_WORKSPACE_NAME })];
+  }
+
+  const ids = new Set(workspaces.map((w) => w.id));
+  const fallbackId = ids.has(DEFAULT_WORKSPACE_ID) ? DEFAULT_WORKSPACE_ID : workspaces[0].id;
+
+  const notes = data.notes.map((n) => ({
+    ...n,
+    workspaceId: ids.has(n.workspaceId) ? n.workspaceId : fallbackId
+  }));
+
+  const requested = data.settings?.activeWorkspace;
+  return {
+    version: STORE_VERSION,
+    // Spread first so future app-level settings (theme in #2, custom
+    // shortcuts in #5) survive a workspace migration untouched.
+    settings: { ...data.settings, activeWorkspace: ids.has(requested) ? requested : fallbackId },
+    workspaces,
+    notes
+  };
+}
+
 // v1 files were `{ notes: [...] }` with no `version` field and no `visible`/`title`.
 // v2 files have a version field but no `pinned`.
 // v3 files have pinned but no `monospace`.
+// v4 files have monospace but no workspaces.
+// v5 is the `images` schema from #9, accepted here as a migration source too,
+// so this change and that one are independent of merge order.
 function migrate(data) {
-  if (!data || typeof data !== 'object') return { version: STORE_VERSION, notes: [] };
-  if (!Array.isArray(data.notes)) return { version: STORE_VERSION, notes: [] };
+  if (!data || typeof data !== 'object') return emptyStore();
+  if (!Array.isArray(data.notes)) return emptyStore();
 
+  let notes;
   if (!data.version) {
     // v1 -> current: add visible/title/displayId/pinned/monospace/timestamps.
-    return {
-      version: STORE_VERSION,
-      notes: data.notes.map((n) => defaultRecord({ ...n, visible: true, pinned: true }))
-    };
-  }
-  if (data.version === 2) {
+    notes = data.notes.map((n) => defaultRecord({ ...n, visible: true, pinned: true }));
+  } else if (data.version === 2) {
     // v2 -> current: backfill pinned:true so existing notes keep today's
     // always-on-top behavior unchanged. Monospace defaults to off unless
     // the record already has it set.
-    return {
-      version: STORE_VERSION,
-      notes: data.notes.map((n) => ({
-        ...n,
-        pinned: n.pinned !== undefined ? !!n.pinned : true,
-        monospace: !!n.monospace
-      }))
-    };
-  }
-  if (data.version === 3) {
+    notes = data.notes.map((n) => ({
+      ...n,
+      pinned: n.pinned !== undefined ? !!n.pinned : true,
+      monospace: !!n.monospace
+    }));
+  } else if (data.version === 3 || data.version === 4 || data.version === 5) {
     // v3 -> v4: existing notes stay proportional unless the user toggles {}.
-    return {
-      version: STORE_VERSION,
-      notes: data.notes.map((n) => ({ ...n, monospace: !!n.monospace }))
-    };
+    // v4/v5 -> v6: the workspace backfill below is the only change; spreading
+    // keeps any fields this version doesn't know about (e.g. v5 `images`).
+    notes = data.notes.map((n) => ({ ...n, monospace: !!n.monospace }));
+  } else {
+    notes = data.notes;
   }
-  return data;
+
+  // Every pre-v6 file predates workspaces, so normalizeWorkspaces drops all
+  // of its notes into a single "Default" workspace and makes it active, so an
+  // upgrading user sees exactly the notes they saw before.
+  return normalizeWorkspaces({ ...data, notes });
 }
 
 class NoteStore {
@@ -107,7 +192,7 @@ class NoteStore {
     try {
       raw = fs.readFileSync(this.filePath); // Buffer
     } catch (_) {
-      return { data: { version: STORE_VERSION, notes: [] }, migrated: false };
+      return { data: emptyStore(), migrated: false };
     }
 
     // 1) Encryption enabled: try to decrypt the file first.
@@ -156,7 +241,7 @@ class NoteStore {
     } catch (_) {}
     console.error('notes.json was corrupted, backed up to', this.backupPath);
     if (this.onCorrupted) this.onCorrupted(this.backupPath);
-    return { version: STORE_VERSION, notes: [] };
+    return emptyStore();
   }
 
   _writeNow() {
@@ -203,7 +288,12 @@ class NoteStore {
   }
 
   create(overrides = {}) {
-    const record = defaultRecord(overrides);
+    // A new note belongs to whatever workspace is on screen right now,
+    // unless the caller is explicit about it.
+    const record = defaultRecord({
+      workspaceId: this.activeWorkspaceId(),
+      ...overrides
+    });
     this.data.notes.push(record);
     this.save();
     return record;
@@ -224,6 +314,103 @@ class NoteStore {
     this.save();
     return true;
   }
+
+  // ---------- Workspaces (issue #8) ----------
+  //
+  // Workspace membership and `visible` are deliberately independent.
+  // `visible` stays the user's per-note choice *within* its workspace, so
+  // switching away and back restores exactly the notes that were open. It
+  // is never rewritten as a side effect of changing workspace. Callers
+  // decide what to render with:
+  //
+  //     shown = note.visible && note.workspaceId === activeWorkspaceId()
+
+  settings() {
+    return this.data.settings;
+  }
+
+  workspaces() {
+    return this.data.workspaces;
+  }
+
+  getWorkspace(id) {
+    return this.data.workspaces.find((w) => w.id === id) || null;
+  }
+
+  activeWorkspaceId() {
+    return this.data.settings.activeWorkspace;
+  }
+
+  notesInWorkspace(workspaceId) {
+    return this.data.notes.filter((n) => n.workspaceId === workspaceId);
+  }
+
+  setActiveWorkspace(id) {
+    if (!this.getWorkspace(id)) return null;
+    this.data.settings.activeWorkspace = id;
+    this.save();
+    return id;
+  }
+
+  createWorkspace(name) {
+    const workspace = defaultWorkspace({ name });
+    this.data.workspaces.push(workspace);
+    this.save();
+    return workspace;
+  }
+
+  renameWorkspace(id, name) {
+    const workspace = this.getWorkspace(id);
+    if (!workspace) return null;
+    const clean = sanitizeWorkspaceName(name);
+    if (!clean) return workspace; // ignore a blank rename rather than wiping the label
+    workspace.name = clean;
+    this.save();
+    return workspace;
+  }
+
+  // Deleting a workspace never deletes notes. They are reassigned to the
+  // fallback workspace. Refuses to remove the last remaining workspace so
+  // the "at least one workspace" invariant always holds.
+  // Returns { movedCount, fallbackId } on success, or null if refused.
+  removeWorkspace(id) {
+    if (this.data.workspaces.length <= 1) return null;
+    const idx = this.data.workspaces.findIndex((w) => w.id === id);
+    if (idx === -1) return null;
+
+    const remaining = this.data.workspaces.filter((w) => w.id !== id);
+    const fallback = remaining.find((w) => w.id === DEFAULT_WORKSPACE_ID) || remaining[0];
+
+    let movedCount = 0;
+    for (const note of this.data.notes) {
+      if (note.workspaceId === id) {
+        note.workspaceId = fallback.id;
+        movedCount++;
+      }
+    }
+
+    this.data.workspaces.splice(idx, 1);
+    if (this.data.settings.activeWorkspace === id) {
+      this.data.settings.activeWorkspace = fallback.id;
+    }
+    this.save();
+    return { movedCount, fallbackId: fallback.id };
+  }
+
+  moveNote(noteId, workspaceId) {
+    const record = this.get(noteId);
+    if (!record || !this.getWorkspace(workspaceId)) return null;
+    record.workspaceId = workspaceId;
+    record.updatedAt = Date.now();
+    this.save();
+    return record;
+  }
 }
 
-module.exports = { NoteStore, defaultRecord, STORE_VERSION };
+module.exports = {
+  NoteStore,
+  defaultRecord,
+  STORE_VERSION,
+  DEFAULT_WORKSPACE_ID,
+  sanitizeWorkspaceName
+};

@@ -23,6 +23,15 @@
     --sh-hover:    0 6px 18px rgba(20,20,30,0.08), 0 1px 3px rgba(20,20,30,0.05);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
   html, body {
     height: 100%;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -92,6 +101,92 @@
   }
   .btn:hover { background: var(--accent-dk); }
   .btn:active { transform: scale(0.97); }
+
+  /* ─── Workspace bar (issue #8) ────────────────────────── */
+  .wsbar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+
+  .ws-select-wrap {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+  .ws-select-wrap > svg {
+    position: absolute;
+    left: 10px;
+    color: var(--accent);
+    pointer-events: none;
+  }
+  .ws-select-wrap::after {
+    content: "";
+    position: absolute;
+    right: 11px;
+    width: 7px;
+    height: 7px;
+    border-right: 1.8px solid var(--muted);
+    border-bottom: 1.8px solid var(--muted);
+    transform: rotate(45deg) translate(-2px, -2px);
+    pointer-events: none;
+  }
+  #workspaceSelect {
+    width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 8px 28px 8px 30px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    color: var(--ink);
+    outline: none;
+    cursor: pointer;
+    text-overflow: ellipsis;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  #workspaceSelect:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-lt);
+  }
+
+  /* Inline create/rename row. Electron disables window.prompt(), so the
+     name is captured in the page rather than a native dialog. */
+  .ws-form {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--accent-lt);
+  }
+  .ws-form[hidden] { display: none; }
+  #wsNameInput {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid var(--border-2);
+    background: var(--surface);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--ink);
+    outline: none;
+  }
+  #wsNameInput:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(91, 75, 255, 0.15);
+  }
 
   /* ─── List ────────────────────────────────────────────── */
   .list {
@@ -212,6 +307,28 @@
     flex: 0 0 auto;
   }
 
+  /* Per-card "move to workspace" control. Only rendered when more than one
+     workspace exists, so a single-workspace user never sees it. */
+  .move-select {
+    max-width: 30px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    padding: 6px 4px;
+    font-size: 12px;
+    font-family: inherit;
+    color: var(--muted);
+    cursor: pointer;
+    outline: none;
+    transition: background 0.15s, color 0.15s, max-width 0.15s;
+  }
+  .move-select:hover,
+  .move-select:focus {
+    max-width: 120px;
+    background: var(--surface-2);
+    color: var(--ink);
+  }
+
   #version {
     flex: 0 0 auto;
     padding: 8px 12px;
@@ -224,6 +341,31 @@
 </style>
 </head>
 <body>
+  <div class="wsbar">
+    <div class="ws-select-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      <select id="workspaceSelect" aria-label="Active workspace"></select>
+    </div>
+    <button class="icon-btn" id="wsNew" title="New workspace" aria-label="New workspace">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+    <button class="icon-btn" id="wsRename" title="Rename workspace" aria-label="Rename workspace">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+    </button>
+    <button class="icon-btn danger" id="wsDelete" title="Delete workspace" aria-label="Delete workspace">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6"/></svg>
+    </button>
+  </div>
+
+  <form class="ws-form" id="wsForm" hidden>
+    <label class="sr-only" for="wsNameInput">Workspace name</label>
+    <input id="wsNameInput" type="text" maxlength="40" placeholder="Workspace name…" autocomplete="off" />
+    <button type="submit" class="btn" id="wsSave">Save</button>
+    <button type="button" class="icon-btn" id="wsCancel" title="Cancel" aria-label="Cancel">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </form>
+
   <div class="toolbar">
     <div class="search-wrap">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>

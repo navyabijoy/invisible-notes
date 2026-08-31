@@ -16,9 +16,17 @@ const ICONS = {
 
 const listEl = document.getElementById('list');
 const searchEl = document.getElementById('search');
+const workspaceSelectEl = document.getElementById('workspaceSelect');
+const wsFormEl = document.getElementById('wsForm');
+const wsNameInputEl = document.getElementById('wsNameInput');
+const wsDeleteEl = document.getElementById('wsDelete');
 
 let notes = [];
+let workspaces = [];
+let activeWorkspace = null;
 let query = '';
+// null when the inline name row is closed, otherwise 'create' | 'rename'.
+let formMode = null;
 
 function label(note) {
   return (note.title || '').trim();
@@ -48,15 +56,18 @@ function matches(note, q) {
 }
 
 function render() {
-  const filtered = notes
+  // The list only ever shows the active workspace, since switching workspace is
+  // what changes which notes are on screen, so the manager mirrors that.
+  const inWorkspace = notes.filter((n) => n.workspaceId === activeWorkspace);
+  const filtered = inWorkspace
     .slice()
     .sort((a, b) => b.updatedAt - a.updatedAt)
     .filter((n) => matches(n, query));
 
   listEl.innerHTML = '';
 
-  if (notes.length === 0) {
-    listEl.innerHTML = `<div class="empty">${ICONS.notes}<div>No notes yet.<br/>Click "New" or press &#8984;&#8679;N (Ctrl+Shift+N) to create one.</div></div>`;
+  if (inWorkspace.length === 0) {
+    listEl.innerHTML = `<div class="empty">${ICONS.notes}<div>No notes in this workspace.<br/>Click "New" or press &#8984;&#8679;N (Ctrl+Shift+N) to create one.</div></div>`;
     return;
   }
   if (filtered.length === 0) {
@@ -99,6 +110,29 @@ function render() {
     const actions = document.createElement('div');
     actions.className = 'actions';
 
+    // Move-to-workspace. Pointless with only one workspace, so it isn't
+    // rendered until a second one exists.
+    if (workspaces.length > 1) {
+      const moveSelect = document.createElement('select');
+      moveSelect.className = 'move-select';
+      moveSelect.title = 'Move to workspace';
+      moveSelect.setAttribute('aria-label', 'Move note to workspace');
+      for (const workspace of workspaces) {
+        const opt = document.createElement('option');
+        opt.value = workspace.id;
+        opt.textContent = workspace.name;
+        opt.selected = workspace.id === note.workspaceId;
+        moveSelect.appendChild(opt);
+      }
+      moveSelect.addEventListener('change', () => {
+        window.manager.moveNote(note.id, moveSelect.value);
+      });
+      // The card opens the note on double-click; don't let clicks in the
+      // dropdown bubble up to that handler.
+      moveSelect.addEventListener('dblclick', (e) => e.stopPropagation());
+      actions.appendChild(moveSelect);
+    }
+
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'icon-btn danger';
     deleteBtn.title = 'Delete permanently';
@@ -120,6 +154,66 @@ function render() {
   }
 }
 
+// ─── Workspaces (issue #8) ──────────────────────────────────────
+function renderWorkspaces() {
+  workspaceSelectEl.innerHTML = '';
+  for (const workspace of workspaces) {
+    const count = notes.filter((n) => n.workspaceId === workspace.id).length;
+    const opt = document.createElement('option');
+    opt.value = workspace.id;
+    opt.textContent = `${workspace.name} (${count})`;
+    opt.selected = workspace.id === activeWorkspace;
+    workspaceSelectEl.appendChild(opt);
+  }
+  // The last workspace can't be deleted. The store refuses, so don't
+  // offer it either.
+  wsDeleteEl.disabled = workspaces.length <= 1;
+}
+
+// Electron disables window.prompt(), so create/rename share this inline row
+// rather than a native text dialog.
+function openWorkspaceForm(mode) {
+  formMode = mode;
+  const current = workspaces.find((w) => w.id === activeWorkspace);
+  wsNameInputEl.value = mode === 'rename' && current ? current.name : '';
+  wsFormEl.hidden = false;
+  wsNameInputEl.focus();
+  wsNameInputEl.select();
+}
+
+function closeWorkspaceForm() {
+  formMode = null;
+  wsFormEl.hidden = true;
+  wsNameInputEl.value = '';
+}
+
+workspaceSelectEl.addEventListener('change', () => {
+  closeWorkspaceForm();
+  window.manager.setWorkspace(workspaceSelectEl.value);
+});
+
+document.getElementById('wsNew').addEventListener('click', () => openWorkspaceForm('create'));
+document.getElementById('wsRename').addEventListener('click', () => openWorkspaceForm('rename'));
+wsDeleteEl.addEventListener('click', () => window.manager.deleteWorkspace(activeWorkspace));
+document.getElementById('wsCancel').addEventListener('click', () => closeWorkspaceForm());
+
+wsFormEl.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const name = wsNameInputEl.value.trim();
+  if (!name) {
+    closeWorkspaceForm();
+    return;
+  }
+  if (formMode === 'create') window.manager.createWorkspace(name);
+  else if (formMode === 'rename') window.manager.renameWorkspace(activeWorkspace, name);
+  closeWorkspaceForm();
+});
+
+wsNameInputEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeWorkspaceForm();
+});
+
+// ─── Notes ──────────────────────────────────────────────────────
 searchEl.addEventListener('input', () => {
   query = searchEl.value;
   render();
@@ -127,15 +221,18 @@ searchEl.addEventListener('input', () => {
 
 document.getElementById('newNote').addEventListener('click', () => window.manager.newNote());
 
-window.manager.onChanged((updated) => {
-  notes = updated;
+// Notes and workspaces always arrive together so the list can never render
+// against a stale workspace set.
+function applySnapshot(snapshot) {
+  notes = snapshot.notes || [];
+  workspaces = snapshot.workspaces || [];
+  activeWorkspace = snapshot.activeWorkspace || null;
+  renderWorkspaces();
   render();
-});
+}
 
-window.manager.list().then((initial) => {
-  notes = initial;
-  render();
-});
+window.manager.onChanged(applySnapshot);
+window.manager.list().then(applySnapshot);
 
 window.manager.version().then((v) => {
   document.getElementById('version').textContent = 'Ghost Notes v' + v;
