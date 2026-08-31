@@ -20,3 +20,4 @@ npm-debug.log*
 # Env
 .env
 .env.local
+bun.lock

@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const STORE_VERSION = 4;
+const STORE_VERSION = 5;
 
 function nextId() {
   return 'note-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6);
@@ -26,6 +26,8 @@ function defaultRecord(overrides = {}) {
     fontSize: overrides.fontSize || 15,
     // Per-note monospace toggle for code walkthroughs (issue #7).
     monospace: !!overrides.monospace,
+    // Filenames (not paths) of pasted images living in userData/note-images.
+    images: Array.isArray(overrides.images) ? overrides.images : [],
     ghost: !!overrides.ghost,
     visible: overrides.visible !== undefined ? !!overrides.visible : true,
     // Pinned = always-on-top, survives switching focus to another app.
@@ -39,6 +41,7 @@ function defaultRecord(overrides = {}) {
 // v1 files were `{ notes: [...] }` with no `version` field and no `visible`/`title`.
 // v2 files have a version field but no `pinned`.
 // v3 files have pinned but no `monospace`.
+// v4 files have monospace but no `images`.
 function migrate(data) {
   if (!data || typeof data !== 'object') return { version: STORE_VERSION, notes: [] };
   if (!Array.isArray(data.notes)) return { version: STORE_VERSION, notes: [] };
@@ -59,15 +62,21 @@ function migrate(data) {
       notes: data.notes.map((n) => ({
         ...n,
         pinned: n.pinned !== undefined ? !!n.pinned : true,
-        monospace: !!n.monospace
+        monospace: !!n.monospace,
+        images: Array.isArray(n.images) ? n.images : []
       }))
     };
   }
-  if (data.version === 3) {
+  if (data.version === 3 || data.version === 4) {
     // v3 -> v4: existing notes stay proportional unless the user toggles {}.
+    // v4 -> v5: notes start with no pasted images.
     return {
       version: STORE_VERSION,
-      notes: data.notes.map((n) => ({ ...n, monospace: !!n.monospace }))
+      notes: data.notes.map((n) => ({
+        ...n,
+        monospace: !!n.monospace,
+        images: Array.isArray(n.images) ? n.images : []
+      }))
     };
   }
   return data;

@@ -1,5 +1,6 @@
 const { app, ipcMain, screen, Tray, Menu, nativeImage, dialog, powerMonitor } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const { NoteStore } = require('./store');
 const platform = require('./platform');
 const { createNoteWindow, applyContentProtection } = require('./noteWindow');
@@ -90,10 +91,21 @@ function hideNote(id) {
   manager.notifyChanged();
 }
 
+// Pasted images live as standalone files here, only filenames go in the
+// JSON store — keeps notes.json small and every debounced save cheap.
+const imagesDir = path.join(app.getPath('userData'), 'note-images');
+
+function deleteImageFiles(record) {
+  for (const name of (record && record.images) || []) {
+    try { fs.unlinkSync(path.join(imagesDir, name)); } catch (_) {}
+  }
+}
+
 function deleteNoteRecord(id) {
   const win = noteWindows.get(id);
   if (win && !win.isDestroyed()) win.destroy();
   noteWindows.delete(id);
+  deleteImageFiles(store.get(id));
   store.remove(id);
   updateTrayMenu();
   manager.notifyChanged();
@@ -153,9 +165,10 @@ function reconcileOpenWindowsToDisplays() {
 // ---------- IPC from renderer ----------
 ipcMain.on('note:update', (e, payload) => {
   if (!payload || typeof payload.id !== 'string') return;
-  const { id, text, color, opacity, fontSize, monospace, ghost } = payload;
+  const { id, text, images, color, opacity, fontSize, monospace, ghost } = payload;
   const patch = {};
   if (typeof text === 'string') patch.text = text;
+  if (Array.isArray(images) && images.every((n) => typeof n === 'string')) patch.images = images;
   if (typeof color === 'string') patch.color = color;
   if (typeof opacity === 'number') patch.opacity = opacity;
   if (typeof fontSize === 'number') patch.fontSize = fontSize;
@@ -193,6 +206,44 @@ ipcMain.on('note:setPinned', (e, { id, pinned }) => {
 
 ipcMain.handle('note:getState', (e, id) => store.get(id));
 
+// ---------- Pasted images ----------
+ipcMain.handle('note:imagesDir', () => imagesDir);
+
+const IMAGE_EXT = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif', 'image/webp': 'webp' };
+
+ipcMain.handle('note:saveImage', (e, { id, type, bytes }) => {
+  const record = store.get(id);
+  const ext = IMAGE_EXT[type];
+  if (!record || !ext || !(bytes instanceof Uint8Array) || bytes.length === 0) return null;
+  const name = `${id}-${Date.now().toString(36)}.${ext}`;
+  try {
+    fs.mkdirSync(imagesDir, { recursive: true });
+    fs.writeFileSync(path.join(imagesDir, name), Buffer.from(bytes));
+  } catch (err) {
+    console.error('Failed to save pasted image:', err);
+    return null;
+  }
+  store.update(id, { images: [...(record.images || []), name] });
+  return name;
+});
+
+// Images removed from a note (backspace on an inline image) keep their file
+// for the rest of the session so in-editor undo still works; orphans are
+// swept here on the next launch instead.
+function pruneOrphanImages() {
+  let names;
+  try { names = fs.readdirSync(imagesDir); } catch (_) { return; }
+  const referenced = new Set();
+  for (const record of store.all()) {
+    for (const n of record.images || []) referenced.add(n);
+  }
+  for (const name of names) {
+    if (!referenced.has(name)) {
+      try { fs.unlinkSync(path.join(imagesDir, name)); } catch (_) {}
+    }
+  }
+}
+
 ipcMain.on('note:close', (e, id) => hideNote(id));
 
 ipcMain.on('note:new', () => createNoteNearCursor());
@@ -209,7 +260,11 @@ function buildTrayIcon() {
 }
 
 function noteLabel(record) {
-  const snippet = (record.title || record.text || '').replace(/\s+/g, ' ').trim().slice(0, 30);
+  const snippet = (record.title || record.text || '')
+    .replace(/!\[img:[^\]]*\]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 30);
   return snippet || 'Untitled note';
 }
 
@@ -274,6 +329,7 @@ if (!gotLock) {
 
   app.whenReady().then(() => {
     platform.hideDockIconIfMac(app);
+    pruneOrphanImages();
     setupTray();
 
     const records = store.all();

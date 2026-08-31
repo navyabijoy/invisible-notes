@@ -20,7 +20,7 @@ const colorPopover = document.getElementById('colorPopover');
 const pinBtn = document.getElementById('pin');
 const monoBtn = document.getElementById('mono');
 
-let state = { text: '', color: 'yellow', opacity: 0.85, fontSize: 15, monospace: false, ghost: false, pinned: true };
+let state = { text: '', color: 'yellow', opacity: 0.85, fontSize: 15, monospace: false, ghost: false, pinned: true, images: [] };
 
 const noteEl = document.querySelector('.note');
 const barEl = document.querySelector('.bar');
@@ -127,12 +127,186 @@ document.addEventListener('click', (e) => {
   if (!e.target.closest('.color-control')) setColorPopoverOpen(false);
 });
 
+// --- Notion-style inline images ---
+// The note body is contenteditable: pasted images are saved as files in
+// userData (main process owns disk I/O) and inserted as <img> at the caret,
+// living inside the text flow. They're selected by click and deleted by
+// backspace natively, like any other content. Persisted as ![img:name]
+// tokens inside state.text; state.images mirrors the referenced filenames
+// so main can clean up orphaned files.
+let imagesDir = null; // absolute path, fetched once before first render
+const IMG_TOKEN = /(!\[img:[^\]\s]+\])/;
+
+function makeImg(name) {
+  const img = document.createElement('img');
+  img.src = 'file://' + encodeURI(imagesDir + '/' + name);
+  img.dataset.name = name;
+  img.draggable = false;
+  return img;
+}
+
+// DOM -> stored text. Chromium wraps lines in <div> and uses <br> for blank
+// lines; flatten those back to \n and images to tokens.
+function serialize(node = textEl) {
+  let s = '';
+  for (const child of node.childNodes) {
+    if (child.nodeType === Node.TEXT_NODE) s += child.data;
+    else if (child.tagName === 'BR') s += '\n';
+    else if (child.tagName === 'IMG') { if (child.dataset.name) s += `![img:${child.dataset.name}]`; }
+    else {
+      if (s && !s.endsWith('\n')) s += '\n';
+      s += serialize(child);
+    }
+  }
+  return s;
+}
+
+// Stored text -> DOM.
+function renderContent() {
+  textEl.replaceChildren();
+  for (const part of state.text.split(IMG_TOKEN)) {
+    const m = part.match(/^!\[img:(.+)\]$/);
+    if (m) textEl.appendChild(makeImg(m[1]));
+    else if (part) textEl.appendChild(document.createTextNode(part));
+  }
+}
+
+function syncFromDom() {
+  state.text = serialize();
+  state.images = [...new Set([...textEl.querySelectorAll('img')].map((i) => i.dataset.name).filter(Boolean))];
+  push();
+}
+
+function insertAtCaret(node) {
+  const sel = window.getSelection();
+  let range = sel.rangeCount ? sel.getRangeAt(0) : null;
+  if (!range || !textEl.contains(range.startContainer)) {
+    range = document.createRange();
+    range.selectNodeContents(textEl);
+    range.collapse(false);
+  }
+  range.deleteContents();
+  range.insertNode(node);
+  range.setStartAfter(node);
+  range.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+textEl.addEventListener('paste', async (e) => {
+  e.preventDefault();
+  const item = [...(e.clipboardData?.items || [])].find((i) => i.type.startsWith('image/'));
+  if (!item) {
+    // Plain text only — never let pasted HTML markup into the editor.
+    document.execCommand('insertText', false, e.clipboardData.getData('text/plain'));
+    return;
+  }
+  const file = item.getAsFile();
+  if (!file) return;
+  // Show the image instantly from the clipboard bytes; the disk save runs
+  // behind it and just attaches the persistent name when done.
+  const img = document.createElement('img');
+  img.src = URL.createObjectURL(file);
+  img.draggable = false;
+  insertAtCaret(img);
+  img.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const name = await window.notes.saveImage(id, file.type, bytes);
+  if (!name) {
+    img.remove();
+    syncFromDom();
+    return;
+  }
+  img.dataset.name = name;
+  syncFromDom();
+});
+
+// Notion-style deletion: backspace with the caret right after an image (or
+// delete right before one) first selects it — a second press actually
+// removes it. Prevents nuking a diagram you can't retype by accident.
+function adjacentImage(container, offset, dir) {
+  let node;
+  if (container.nodeType === Node.TEXT_NODE) {
+    if (dir < 0 && offset > 0) return null; // caret inside text
+    if (dir > 0 && offset < container.length) return null;
+    node = container;
+  } else {
+    const child = container.childNodes[dir < 0 ? offset - 1 : offset];
+    if (child) return child.tagName === 'IMG' ? child : null;
+    node = container;
+    if (node === textEl) return null;
+  }
+  // At the edge of a node: step to its sibling, hopping up through the
+  // line wrapper <div>s Chromium creates (and into the neighbor line's edge).
+  while (node && node !== textEl) {
+    const sib = dir < 0 ? node.previousSibling : node.nextSibling;
+    if (sib) {
+      if (sib.tagName === 'IMG') return sib;
+      if (sib.tagName === 'DIV') {
+        const edge = dir < 0 ? sib.lastChild : sib.firstChild;
+        return edge && edge.tagName === 'IMG' ? edge : null;
+      }
+      return null;
+    }
+    node = node.parentNode;
+  }
+  return null;
+}
+
+function selectNode(node) {
+  const range = document.createRange();
+  range.selectNode(node);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+textEl.addEventListener('keydown', (e) => {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  if (e.key === 'Escape' && !sel.isCollapsed) {
+    sel.collapseToEnd();
+    return;
+  }
+  if (e.key !== 'Backspace' && e.key !== 'Delete') return;
+  const range = sel.getRangeAt(0);
+  if (!range.collapsed) return; // something's selected: let native delete run
+  const img = adjacentImage(range.startContainer, range.startOffset, e.key === 'Backspace' ? -1 : 1);
+  if (img) {
+    e.preventDefault();
+    selectNode(img);
+  }
+});
+
+// Reflect "image is inside the current selection" as a class so CSS can
+// draw a clear Notion-like selected outline.
+document.addEventListener('selectionchange', () => {
+  const sel = window.getSelection();
+  for (const img of textEl.querySelectorAll('img')) {
+    img.classList.toggle('selected', !sel.isCollapsed && sel.rangeCount > 0 && sel.containsNode(img, false));
+  }
+});
+
+// Click an image to select it as a block (Notion-style); backspace/delete
+// then removes it via the browser's own editing behavior.
+textEl.addEventListener('click', (e) => {
+  if (e.target.tagName !== 'IMG') return;
+  const range = document.createRange();
+  range.selectNode(e.target);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+});
+
+// Rich content dropped from other apps would inject markup — block it.
+textEl.addEventListener('drop', (e) => e.preventDefault());
+
 function applyState() {
   applyColor(state.color);
   root.style.setProperty('--opacity', state.opacity);
   root.style.setProperty('--font-size', state.fontSize + 'px');
   opacityEl.value = Math.round(state.opacity * 100);
-  textEl.value = state.text;
+  renderContent();
   applyGhost();
   applyPinned();
   applyMonospace();
@@ -142,6 +316,7 @@ function push() {
   window.notes.update({
     id,
     text: state.text,
+    images: state.images,
     color: state.color,
     opacity: state.opacity,
     fontSize: state.fontSize,
@@ -167,10 +342,7 @@ for (const name of Object.keys(COLORS)) {
 }
 
 // Events
-textEl.addEventListener('input', () => {
-  state.text = textEl.value;
-  push();
-});
+textEl.addEventListener('input', () => syncFromDom());
 
 opacityEl.addEventListener('input', () => {
   state.opacity = Math.max(0.3, Math.min(1, opacityEl.value / 100));
@@ -196,11 +368,18 @@ document.getElementById('close').addEventListener('click', () => window.notes.cl
 window.notes.onToggleGhost(() => setGhost(!state.ghost));
 
 // Load persisted state
-window.notes.getState(id).then((s) => {
+Promise.all([window.notes.getState(id), window.notes.imagesDir()]).then(([s, dir]) => {
   if (s) state = Object.assign(state, s);
   // Older records (pre-v4) may omit this; normalize missing to false
   // so the renderer always treats monospace as a boolean.
   state.monospace = !!state.monospace;
+  state.images = Array.isArray(state.images) ? state.images : [];
+  imagesDir = dir;
+  // Records from the pre-inline era kept images outside the text; fold any
+  // unreferenced ones into the text as tokens so they stay visible.
+  for (const name of state.images) {
+    if (!state.text.includes(`![img:${name}]`)) state.text += `\n![img:${name}]`;
+  }
   applyState();
   textEl.focus();
 });
