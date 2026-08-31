@@ -139,7 +139,10 @@ const IMG_TOKEN = /(!\[img:[^\]\s]+\])/;
 
 function makeImg(name) {
   const img = document.createElement('img');
-  img.src = 'file://' + encodeURI(imagesDir + '/' + name);
+  if (!imagesDir) return img;
+  const base = imagesDir.replace(/\\/g, '/');
+  const prefix = base.startsWith('/') ? 'file://' : 'file:///';
+  img.src = `${prefix}${encodeURI(base)}/${encodeURIComponent(name)}`;
   img.dataset.name = name;
   img.draggable = false;
   return img;
