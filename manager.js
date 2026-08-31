@@ -114,9 +114,12 @@ function createManagerModule({ store, actions }) {
 
     const noteCount = store.notesInWorkspace(id).length;
     const plural = noteCount === 1 ? '' : 's';
+    // Name the workspace the notes will actually land in. Hardcoding
+    // "Default" is wrong once that workspace has been renamed or deleted.
+    const fallback = store.fallbackWorkspaceFor(id);
     const detail = noteCount === 0
       ? 'This workspace is empty. No notes will be affected.'
-      : `Its ${noteCount} note${plural} will be moved to your Default workspace, not deleted.`;
+      : `Its ${noteCount} note${plural} will be moved to "${fallback.name}", not deleted.`;
 
     const targetWindow = BrowserWindow.fromWebContents(e.sender) || undefined;
     const { response } = await dialog.showMessageBox(targetWindow, {

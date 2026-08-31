@@ -6,9 +6,15 @@ const path = require('path');
 
 const STORE_VERSION = 6;
 
-// Every install has at least one workspace and it can never be deleted, so a
-// fixed id keeps migrations and the "where do orphaned notes go" fallback
-// simple, with no lookup needed to find a guaranteed-valid destination.
+// The workspace every migrated note lands in. The id is fixed so migrations
+// have a stable target and so the "where do orphaned notes go" fallback has
+// something to prefer.
+//
+// It is NOT permanent: any workspace can be deleted as long as it is not the
+// last one, this one included. Someone who organises into "Work" and
+// "Personal" should not be stuck with an unused "Default" forever. The
+// invariant that actually holds is that at least one workspace always exists,
+// so pickFallbackWorkspace() always has a destination.
 const DEFAULT_WORKSPACE_ID = 'ws-default';
 const DEFAULT_WORKSPACE_NAME = 'Default';
 const MAX_WORKSPACE_NAME_LENGTH = 40;
@@ -65,6 +71,16 @@ function defaultRecord(overrides = {}) {
   };
 }
 
+// Where notes go when their own workspace is missing or is being removed.
+// Prefers the default workspace when it is still present, otherwise the
+// first remaining one. Callers use this to name the real destination rather
+// than assuming it is "Default", which is wrong once that workspace has been
+// renamed or deleted. Returns null only for an empty list.
+function pickFallbackWorkspace(workspaces, excludeId) {
+  const remaining = excludeId === undefined ? workspaces : workspaces.filter((w) => w.id !== excludeId);
+  return remaining.find((w) => w.id === DEFAULT_WORKSPACE_ID) || remaining[0] || null;
+}
+
 function emptyStore() {
   const workspace = defaultWorkspace({
     id: DEFAULT_WORKSPACE_ID,
@@ -102,7 +118,7 @@ function normalizeWorkspaces(data) {
   }
 
   const ids = new Set(workspaces.map((w) => w.id));
-  const fallbackId = ids.has(DEFAULT_WORKSPACE_ID) ? DEFAULT_WORKSPACE_ID : workspaces[0].id;
+  const fallbackId = pickFallbackWorkspace(workspaces).id;
 
   const notes = data.notes.map((n) => ({
     ...n,
@@ -369,6 +385,14 @@ class NoteStore {
     return workspace;
   }
 
+  // Where the notes of `id` would go if it were deleted. Exposed so the
+  // confirmation dialog can name the real destination instead of assuming
+  // it is called "Default". Returns null when `id` is the last workspace.
+  fallbackWorkspaceFor(id) {
+    if (this.data.workspaces.length <= 1) return null;
+    return pickFallbackWorkspace(this.data.workspaces, id);
+  }
+
   // Deleting a workspace never deletes notes. They are reassigned to the
   // fallback workspace. Refuses to remove the last remaining workspace so
   // the "at least one workspace" invariant always holds.
@@ -378,8 +402,7 @@ class NoteStore {
     const idx = this.data.workspaces.findIndex((w) => w.id === id);
     if (idx === -1) return null;
 
-    const remaining = this.data.workspaces.filter((w) => w.id !== id);
-    const fallback = remaining.find((w) => w.id === DEFAULT_WORKSPACE_ID) || remaining[0];
+    const fallback = pickFallbackWorkspace(this.data.workspaces, id);
 
     let movedCount = 0;
     for (const note of this.data.notes) {
