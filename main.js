@@ -1,4 +1,4 @@
-const { app, ipcMain, screen, Tray, Menu, nativeImage, dialog, powerMonitor } = require('electron');
+const { app, ipcMain, screen, Tray, Menu, nativeImage, dialog, powerMonitor, safeStorage } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { NoteStore } = require('./store');
@@ -10,22 +10,53 @@ const { createManagerModule } = require('./manager');
 
 // Show plain-language notices only — never a raw stack trace to the user.
 let writeErrorShown = false;
-const store = new NoteStore(app.getPath('userData'), {
-  onCorrupted: () => {
-    dialog.showErrorBox(
-      'Notes file was reset',
-      'Your saved notes file could not be read and looked corrupted, so it was backed up and Ghost Notes started fresh. Your previous notes were not deleted — the backup is in the app data folder if you need to recover them.'
-    );
-  },
-  onWriteError: () => {
-    if (writeErrorShown) return;
-    writeErrorShown = true;
-    dialog.showErrorBox(
-      'Could not save notes',
-      'Ghost Notes could not write to its data folder. Check that the app has permission to write there and that the disk is not full. Your notes in memory are safe until you quit.'
-    );
+
+// The store is created lazily inside app.whenReady(): NoteStore reads/writes
+// notes.json synchronously at construction, but safeStorage — which we use to
+// encrypt notes at rest — is only guaranteed to be available after the app is
+// ready. `store`/`manager` are hoisted as `let` and assigned there; every
+// function that touches them is invoked from the ready lifecycle or IPC, both
+// of which run only after app is ready.
+let store = null;
+let manager = null;
+
+// Build the encryption codec used by NoteStore to protect notes.json at rest.
+// safeStorage leverages OS-level encryption (Keychain on macOS, DPAPI on
+// Windows) keyed to the current OS user. We only enable it when the platform
+// actually supports it; otherwise we fall back to plaintext with a warning.
+function createStoreCodec() {
+  if (safeStorage && safeStorage.isEncryptionAvailable()) {
+    return {
+      encrypt: (plain) => safeStorage.encryptString(plain),
+      decrypt: (cipher) => safeStorage.decryptString(cipher)
+    };
   }
-});
+  console.warn(
+    'OS-level storage encryption (safeStorage) is unavailable on this system; ' +
+      'notes will be stored in plaintext.'
+  );
+  return null;
+}
+
+function createStore() {
+  return new NoteStore(app.getPath('userData'), {
+    codec: createStoreCodec(),
+    onCorrupted: () => {
+      dialog.showErrorBox(
+        'Notes file was reset',
+        'Your saved notes file could not be read and looked corrupted, so it was backed up and Ghost Notes started fresh. Your previous notes were not deleted — the backup is in the app data folder if you need to recover them.'
+      );
+    },
+    onWriteError: () => {
+      if (writeErrorShown) return;
+      writeErrorShown = true;
+      dialog.showErrorBox(
+        'Could not save notes',
+        'Ghost Notes could not write to its data folder. Check that the app has permission to write there and that the disk is not full. Your notes in memory are safe until you quit.'
+      );
+    }
+  });
+}
 
 // Open BrowserWindows only — a subset of store records. A record can exist
 // (and be listed in the future Notes Manager) with no entry here at all,
@@ -33,16 +64,21 @@ const store = new NoteStore(app.getPath('userData'), {
 const noteWindows = new Map(); // id -> BrowserWindow
 let tray = null;
 
-const manager = createManagerModule({
-  store,
-  actions: {
-    showNote: (id) => showNote(id),
-    hideNote: (id) => hideNote(id),
-    deleteNoteRecord: (id) => deleteNoteRecord(id),
-    renameNote: (id, title) => renameNote(id, title),
-    createNote: () => createNoteNearCursor()
-  }
-});
+// createManagerModule registers IPC handlers that only act once a renderer
+// sends a message, so it can be created lazily after app is ready alongside
+// `store` (which createManagerModule closes over). See createStore() above.
+function createManager() {
+  return createManagerModule({
+    store,
+    actions: {
+      showNote: (id) => showNote(id),
+      hideNote: (id) => hideNote(id),
+      deleteNoteRecord: (id) => deleteNoteRecord(id),
+      renameNote: (id, title) => renameNote(id, title),
+      createNote: () => createNoteNearCursor()
+    }
+  });
+}
 
 function openNoteWindow(record) {
   const win = createNoteWindow(record, {
@@ -330,6 +366,13 @@ if (!gotLock) {
   app.whenReady().then(() => {
     platform.hideDockIconIfMac(app);
     pruneOrphanImages();
+
+    // safeStorage is only guaranteed available after the app is ready, so this
+    // is the earliest safe point to construct the (synchronous) store and wire
+    // up the manager that depends on it.
+    store = createStore();
+    manager = createManager();
+
     setupTray();
 
     const records = store.all();
