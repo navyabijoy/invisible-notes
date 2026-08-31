@@ -198,29 +198,39 @@ function insertAtCaret(node) {
 
 textEl.addEventListener('paste', async (e) => {
   e.preventDefault();
-  const item = [...(e.clipboardData?.items || [])].find((i) => i.type.startsWith('image/'));
+  if (!e.clipboardData) return;
+  const item = [...e.clipboardData.items].find((i) => i.type.startsWith('image/'));
   if (!item) {
     // Plain text only — never let pasted HTML markup into the editor.
-    document.execCommand('insertText', false, e.clipboardData.getData('text/plain'));
+    const text = e.clipboardData.getData('text/plain');
+    if (text) {
+      insertAtCaret(document.createTextNode(text));
+      syncFromDom();
+    }
     return;
   }
   const file = item.getAsFile();
   if (!file) return;
   // Show the image instantly from the clipboard bytes; the disk save runs
-  // behind it and just attaches the persistent name when done.
+  // behind it, then the src is swapped to the persisted file and the blob
+  // URL revoked so large pastes don't stay pinned in memory.
+  const objectUrl = URL.createObjectURL(file);
   const img = document.createElement('img');
-  img.src = URL.createObjectURL(file);
+  img.src = objectUrl;
   img.draggable = false;
   insertAtCaret(img);
   img.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   const bytes = new Uint8Array(await file.arrayBuffer());
   const name = await window.notes.saveImage(id, file.type, bytes);
   if (!name) {
+    URL.revokeObjectURL(objectUrl);
     img.remove();
     syncFromDom();
     return;
   }
   img.dataset.name = name;
+  img.src = makeImg(name).src;
+  URL.revokeObjectURL(objectUrl);
   syncFromDom();
 });
 
