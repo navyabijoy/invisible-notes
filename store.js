@@ -146,15 +146,23 @@ function migrate(data) {
   if (!data || typeof data !== 'object') return emptyStore();
   if (!Array.isArray(data.notes)) return emptyStore();
 
+  // Drop entries that are not objects before anything reads fields off them.
+  // A hand-edited or partially written file can hold a null or a bare number
+  // in the array, and every branch below (and normalizeWorkspaces after it)
+  // dereferences each entry. Reading `n.monospace` off a null throws, and the
+  // throw escapes _load's JSON.parse try block, so it would surface as a
+  // crash on launch rather than the corrupt-file recovery path.
+  const sourceNotes = data.notes.filter((n) => n && typeof n === 'object');
+
   let notes;
   if (!data.version) {
     // v1 -> current: add visible/title/displayId/pinned/monospace/timestamps.
-    notes = data.notes.map((n) => defaultRecord({ ...n, visible: true, pinned: true }));
+    notes = sourceNotes.map((n) => defaultRecord({ ...n, visible: true, pinned: true }));
   } else if (data.version === 2) {
     // v2 -> current: backfill pinned:true so existing notes keep today's
     // always-on-top behavior unchanged. Monospace defaults to off unless
     // the record already has it set.
-    notes = data.notes.map((n) => ({
+    notes = sourceNotes.map((n) => ({
       ...n,
       pinned: n.pinned !== undefined ? !!n.pinned : true,
       monospace: !!n.monospace
@@ -163,9 +171,9 @@ function migrate(data) {
     // v3 -> v4: existing notes stay proportional unless the user toggles {}.
     // v4/v5 -> v6: the workspace backfill below is the only change; spreading
     // keeps any fields this version doesn't know about (e.g. v5 `images`).
-    notes = data.notes.map((n) => ({ ...n, monospace: !!n.monospace }));
+    notes = sourceNotes.map((n) => ({ ...n, monospace: !!n.monospace }));
   } else {
-    notes = data.notes;
+    notes = sourceNotes;
   }
 
   // Every pre-v6 file predates workspaces, so normalizeWorkspaces drops all
