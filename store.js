@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const STORE_VERSION = 3;
+const STORE_VERSION = 4;
 
 function nextId() {
   return 'note-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6);
@@ -24,6 +24,8 @@ function defaultRecord(overrides = {}) {
     displayId: overrides.displayId ?? null,
     opacity: typeof overrides.opacity === 'number' ? overrides.opacity : 0.85,
     fontSize: overrides.fontSize || 15,
+    // Per-note monospace toggle for code walkthroughs (issue #7).
+    monospace: !!overrides.monospace,
     ghost: !!overrides.ghost,
     visible: overrides.visible !== undefined ? !!overrides.visible : true,
     // Pinned = always-on-top, survives switching focus to another app.
@@ -36,23 +38,35 @@ function defaultRecord(overrides = {}) {
 
 // v1 files were `{ notes: [...] }` with no `version` field and no `visible`/`title`.
 // v2 files have a version field but no `pinned`.
+// v3 files have pinned but no `monospace`.
 function migrate(data) {
   if (!data || typeof data !== 'object') return { version: STORE_VERSION, notes: [] };
   if (!Array.isArray(data.notes)) return { version: STORE_VERSION, notes: [] };
 
   if (!data.version) {
-    // v1 -> v3: add visible/title/displayId/pinned/timestamps, keep the rest.
+    // v1 -> current: add visible/title/displayId/pinned/monospace/timestamps.
     return {
       version: STORE_VERSION,
       notes: data.notes.map((n) => defaultRecord({ ...n, visible: true, pinned: true }))
     };
   }
   if (data.version === 2) {
-    // v2 -> v3: backfill pinned:true so existing notes keep today's
-    // always-on-top behavior unchanged.
+    // v2 -> current: backfill pinned:true so existing notes keep today's
+    // always-on-top behavior unchanged, plus monospace:false.
     return {
       version: STORE_VERSION,
-      notes: data.notes.map((n) => ({ ...n, pinned: n.pinned !== undefined ? !!n.pinned : true }))
+      notes: data.notes.map((n) => ({
+        ...n,
+        pinned: n.pinned !== undefined ? !!n.pinned : true,
+        monospace: !!n.monospace
+      }))
+    };
+  }
+  if (data.version === 3) {
+    // v3 -> v4: existing notes stay proportional unless the user toggles {}.
+    return {
+      version: STORE_VERSION,
+      notes: data.notes.map((n) => ({ ...n, monospace: !!n.monospace }))
     };
   }
   return data;

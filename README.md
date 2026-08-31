@@ -31,6 +31,7 @@ The app lives in the **menu bar / system tray** (no Dock icon on macOS). A note 
 - **Resize:** drag any edge/corner
 - **Color:** click the color dot in the hover bar to open a small palette
 - **Opacity / text size:** controls in the hover bar
+- **Code / monospace:** the `{}` icon in the hover bar switches that note to a monospace font (saved per note)
 - **Pin / unpin:** the 📌 icon in the hover bar. Pinned (default) keeps the note always-on-top, even when you switch to another app. Unpinned makes it a normal window that gets covered when another app is focused.
 - **Click-through mode:** the ghost icon (👻) in the hover bar — clicks pass through to whatever is behind the note; hover the bar to interact again
 - **Close a note:** ✕ in the hover bar — this **hides** the note, it does not delete it. The note stays in the Notes Manager and can be reopened any time.

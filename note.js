@@ -18,8 +18,9 @@ const swatchesEl = document.getElementById('swatches');
 const colorBtn = document.getElementById('colorBtn');
 const colorPopover = document.getElementById('colorPopover');
 const pinBtn = document.getElementById('pin');
+const monoBtn = document.getElementById('mono');
 
-let state = { text: '', color: 'yellow', opacity: 0.85, fontSize: 15, ghost: false, pinned: true };
+let state = { text: '', color: 'yellow', opacity: 0.85, fontSize: 15, monospace: false, ghost: false, pinned: true };
 
 const noteEl = document.querySelector('.note');
 const barEl = document.querySelector('.bar');
@@ -81,6 +82,25 @@ function setPinned(on) {
 
 pinBtn.addEventListener('click', () => setPinned(!state.pinned));
 
+// --- Monospace (code snippet) toggle ---
+// Proportional system UI font is the default; {} switches the textarea to
+// a stacked monospace family so code walkthrough notes stay aligned.
+function applyMonospace() {
+  noteEl.classList.toggle('mono', state.monospace);
+  monoBtn.classList.toggle('active', state.monospace);
+  monoBtn.title = state.monospace
+    ? 'Monospace on: click to use the default font'
+    : 'Monospace: better for code snippets';
+}
+
+function setMonospace(on) {
+  state.monospace = on;
+  applyMonospace();
+  push();
+}
+
+monoBtn.addEventListener('click', () => setMonospace(!state.monospace));
+
 function applyColor(color) {
   const c = COLORS[color] || COLORS.yellow;
   root.style.setProperty('--tint', c.tint);
@@ -115,6 +135,7 @@ function applyState() {
   textEl.value = state.text;
   applyGhost();
   applyPinned();
+  applyMonospace();
 }
 
 function push() {
@@ -124,6 +145,7 @@ function push() {
     color: state.color,
     opacity: state.opacity,
     fontSize: state.fontSize,
+    monospace: state.monospace,
     ghost: state.ghost
   });
 }
@@ -176,6 +198,9 @@ window.notes.onToggleGhost(() => setGhost(!state.ghost));
 // Load persisted state
 window.notes.getState(id).then((s) => {
   if (s) state = Object.assign(state, s);
+  // Older records (pre-v4) may omit this; treat missing as off so
+  // classList.toggle(..., force) never gets undefined (which would flip).
+  state.monospace = !!state.monospace;
   applyState();
   textEl.focus();
 });
