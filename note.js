@@ -198,8 +198,8 @@ window.notes.onToggleGhost(() => setGhost(!state.ghost));
 // Load persisted state
 window.notes.getState(id).then((s) => {
   if (s) state = Object.assign(state, s);
-  // Older records (pre-v4) may omit this; treat missing as off so
-  // classList.toggle(..., force) never gets undefined (which would flip).
+  // Older records (pre-v4) may omit this; normalize missing to false
+  // so the renderer always treats monospace as a boolean.
   state.monospace = !!state.monospace;
   applyState();
   textEl.focus();
