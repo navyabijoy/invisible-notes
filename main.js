@@ -210,7 +210,7 @@ ipcMain.on('note:update', (e, payload) => {
   const { id, text, images, color, opacity, fontSize, monospace, ghost } = payload;
   const patch = {};
   if (typeof text === 'string') patch.text = text;
-  if (Array.isArray(images) && images.every((n) => typeof n === 'string' && SAFE_IMAGE_NAME.test(n))) patch.images = images;
+  if (Array.isArray(images)) patch.images = images.filter((n) => typeof n === 'string' && SAFE_IMAGE_NAME.test(n));
   if (typeof color === 'string') patch.color = color;
   if (typeof opacity === 'number') patch.opacity = opacity;
   if (typeof fontSize === 'number') patch.fontSize = fontSize;
