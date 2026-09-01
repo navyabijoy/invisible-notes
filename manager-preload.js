@@ -8,5 +8,7 @@ contextBridge.exposeInMainWorld('manager', {
   rename: (id, title) => ipcRenderer.send('manager:rename', { id, title }),
   newNote: () => ipcRenderer.send('manager:new'),
   onChanged: (cb) => ipcRenderer.on('manager:notesChanged', (e, notes) => cb(notes)),
-  version: () => ipcRenderer.invoke('manager:version')
+  version: () => ipcRenderer.invoke('manager:version'),
+  shortcuts: () => ipcRenderer.invoke('manager:shortcuts'),
+  onShowShortcuts: (cb) => ipcRenderer.on('manager:showShortcuts', () => cb())
 });

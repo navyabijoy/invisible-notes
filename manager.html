@@ -30,7 +30,7 @@
     color: var(--ink);
     -webkit-font-smoothing: antialiased;
   }
-  body { display: flex; flex-direction: column; user-select: none; }
+  body { display: flex; flex-direction: column; user-select: none; position: relative; }
 
   /* ─── Toolbar ─────────────────────────────────────────── */
   .toolbar {
@@ -221,6 +221,98 @@
     border-top: 1px solid var(--border);
     background: var(--surface);
   }
+  /* ─── Shortcut legend ─────────────────────────────────── */
+  .toolbar .icon-btn {
+    flex: 0 0 auto;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .toolbar .icon-btn:hover { background: var(--surface-2); }
+
+  .sheet {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+  }
+  /* `display: flex` above outranks the user-agent's [hidden] rule, so the
+     panel needs its own — without this it is never actually hidden. */
+  .sheet[hidden] { display: none; }
+  .sheet-head {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .sheet-head h2 {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+  }
+  .sheet-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 16px 22px;
+  }
+
+  .sc-group + .sc-group { margin-top: 22px; }
+  .sc-group-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted-2);
+    margin-bottom: 5px;
+  }
+  .sc-group-note {
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .sc-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--r);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: var(--sh);
+  }
+  .sc-row + .sc-row { margin-top: 6px; }
+  .sc-text { flex: 1; min-width: 0; }
+  .sc-label {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .sc-desc {
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .sc-keys {
+    flex: 0 0 auto;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--ink-2);
+    background: var(--surface-2);
+    border: 1px solid var(--border-2);
+    border-bottom-width: 2px;
+    border-radius: 6px;
+    padding: 4px 8px;
+    white-space: nowrap;
+  }
 </style>
 </head>
 <body>
@@ -233,9 +325,23 @@
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       New
     </button>
+    <button class="icon-btn" id="shortcutsBtn" title="Keyboard shortcuts" aria-label="Keyboard shortcuts">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 015.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </button>
   </div>
   <div class="list" id="list"></div>
   <div id="version"></div>
+
+  <div class="sheet" id="shortcuts" hidden>
+    <div class="sheet-head">
+      <h2>Keyboard Shortcuts</h2>
+      <button class="icon-btn" id="shortcutsClose" title="Close (Esc)" aria-label="Close">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body" id="shortcutsBody"></div>
+  </div>
+
   <script src="manager-renderer.js"></script>
 </body>
 </html>

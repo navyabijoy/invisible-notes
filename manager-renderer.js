@@ -19,6 +19,7 @@ const searchEl = document.getElementById('search');
 
 let notes = [];
 let query = '';
+let shortcuts = [];
 
 function label(note) {
   return (note.title || '').trim();
@@ -140,3 +141,101 @@ window.manager.list().then((initial) => {
 window.manager.version().then((v) => {
   document.getElementById('version').textContent = 'Ghost Notes v' + v;
 });
+
+// ─── Shortcut legend ──────────────────────────────────────
+// Read-only for now (issue #20). The rows come from the shortcut definitions
+// in the main process, already formatted for this platform, so nothing here
+// needs to know how an accelerator is spelled — when issue #5 lands custom
+// bindings, this list reflects them without changes.
+const shortcutsEl = document.getElementById('shortcuts');
+const shortcutsBodyEl = document.getElementById('shortcutsBody');
+
+const SCOPE_SECTIONS = [
+  {
+    scope: 'app',
+    title: 'In Ghost Notes',
+    note: 'Active while a note or this window has focus, so the same keys stay free in your browser and editor.'
+  },
+  {
+    scope: 'global',
+    title: 'Anywhere',
+    note: 'Registered system-wide, so you can always reach a new note even when every Ghost Notes window is hidden.'
+  }
+];
+
+function shortcutRow(shortcut) {
+  const row = document.createElement('div');
+  row.className = 'sc-row';
+
+  const text = document.createElement('div');
+  text.className = 'sc-text';
+
+  const labelEl = document.createElement('div');
+  labelEl.className = 'sc-label';
+  labelEl.textContent = shortcut.label;
+
+  const descEl = document.createElement('div');
+  descEl.className = 'sc-desc';
+  descEl.textContent = shortcut.description;
+
+  text.appendChild(labelEl);
+  text.appendChild(descEl);
+
+  const keys = document.createElement('kbd');
+  keys.className = 'sc-keys';
+  keys.textContent = shortcut.display;
+
+  row.appendChild(text);
+  row.appendChild(keys);
+  return row;
+}
+
+function renderShortcuts(shortcuts) {
+  shortcutsBodyEl.innerHTML = '';
+  for (const section of SCOPE_SECTIONS) {
+    const items = shortcuts.filter((s) => s.scope === section.scope);
+    if (items.length === 0) continue;
+
+    const group = document.createElement('div');
+    group.className = 'sc-group';
+
+    const titleEl = document.createElement('div');
+    titleEl.className = 'sc-group-title';
+    titleEl.textContent = section.title;
+
+    const noteEl = document.createElement('div');
+    noteEl.className = 'sc-group-note';
+    noteEl.textContent = section.note;
+
+    group.appendChild(titleEl);
+    group.appendChild(noteEl);
+    for (const shortcut of items) group.appendChild(shortcutRow(shortcut));
+
+    shortcutsBodyEl.appendChild(group);
+  }
+}
+
+// Loaded once at startup; the definitions cannot change while the app runs.
+const shortcutsReady = window.manager.shortcuts().then((list) => {
+  shortcuts = list;
+  renderShortcuts(shortcuts);
+});
+
+async function openShortcuts() {
+  await shortcutsReady;
+  shortcutsEl.hidden = false;
+}
+
+function closeShortcuts() {
+  shortcutsEl.hidden = true;
+}
+
+document.getElementById('shortcutsBtn').addEventListener('click', openShortcuts);
+document.getElementById('shortcutsClose').addEventListener('click', closeShortcuts);
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !shortcutsEl.hidden) closeShortcuts();
+});
+
+// Opened straight onto the legend from the tray's "Keyboard Shortcuts…" item.
+window.manager.onShowShortcuts(openShortcuts);
