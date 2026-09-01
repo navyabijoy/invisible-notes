@@ -37,9 +37,10 @@ The app lives in the **menu bar / system tray** (no Dock icon on macOS). A note 
 - **Click-through mode:** the ghost icon (👻) in the hover bar — clicks pass through to whatever is behind the note; hover the bar to interact again
 - **Close a note:** ✕ in the hover bar — this **hides** the note, it does not delete it. The note stays in the Notes Manager and can be reopened any time.
 - **Delete a note permanently:** only from the Notes Manager, with a confirmation prompt.
+- **Keyboard shortcuts list:** tray icon → Keyboard Shortcuts…, or the **?** button in the Notes Manager — every active shortcut, written the way your platform writes it
 - **Quit:** tray icon → Quit
 
-The standard keyboard shortcuts work while a Ghost Notes note or the Notes Manager has focus. They stay inactive in other apps, so the same shortcuts remain available to your browser, IDE, and operating system. The three-modifier new-note shortcut is the only global binding, providing a way back into the app when every Ghost Notes window is hidden.
+The standard keyboard shortcuts work while a Ghost Notes note or the Notes Manager has focus. They stay inactive in other apps, so the same shortcuts remain available to your browser, IDE, and operating system. The three-modifier new-note shortcut is the only global binding, providing a way back into the app when every Ghost Notes window is hidden. You never have to come back here to look any of this up — the in-app list under **Keyboard Shortcuts…** shows the same thing.
 
 Notes (text, position, size, color, opacity, open/hidden state) auto-save and reappear on next launch. Data lives in a single local JSON file in the OS app-data folder — never uploaded anywhere.
 
