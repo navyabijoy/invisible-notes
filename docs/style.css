@@ -1591,8 +1591,8 @@ kbd {
 .callout-actions {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  align-items: flex-end;
+  gap: 12px;
+  align-items: stretch;
   flex-shrink: 0;
   position: relative;
   z-index: 1;
@@ -1601,44 +1601,49 @@ kbd {
 .cta-light {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 10px;
   background: #ffffff;
-  color: var(--ink);
-  font-size: 14.5px;
+  color: #000000;
+  font-size: 16px;
   font-weight: 600;
-  padding: 12px 22px;
-  border-radius: var(--r-sm);
+  padding: 14px 28px;
+  border-radius: 14px;
   letter-spacing: -0.01em;
   transition: background 0.15s, transform 0.15s;
   white-space: nowrap;
 }
 
 .cta-light:hover {
-  background: #f0edff;
+  background: #f4f4f7;
   transform: translateY(-1px);
-  color: var(--ink);
 }
 
 .cta-ghost {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 13.5px;
-  font-weight: 500;
-  padding: 10px 22px;
-  border-radius: var(--r-sm);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  letter-spacing: -0.01em;
-  transition: border-color 0.15s, color 0.15s;
-  white-space: nowrap;
   justify-content: center;
+  gap: 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.0) 100%), rgba(25, 25, 25, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 500;
+  padding: 13px 28px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  letter-spacing: -0.01em;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  white-space: nowrap;
 }
 
 .cta-ghost:hover {
-  border-color: rgba(255, 255, 255, 0.35);
-  color: rgba(255, 255, 255, 0.9);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.0) 100%), rgba(35, 35, 35, 0.7);
+  border-top-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
 }
 
 /* ═══════════════════════════════════════════════════════════
