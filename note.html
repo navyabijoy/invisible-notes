@@ -128,10 +128,12 @@
     cursor: pointer;
   }
 
-  textarea {
+  /* Notion-style editor: contenteditable so pasted images live inline in
+     the text flow — insert at the caret, select by click, delete with
+     backspace like any other content. */
+  #text {
     flex: 1;
     width: 100%;
-    resize: none;
     border: none;
     outline: none;
     background: transparent;
@@ -142,15 +144,41 @@
     -webkit-user-select: text;
     user-select: text;
     font-family: inherit;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-y: auto;
+    cursor: text;
   }
-  .note.mono textarea {
+  .note.mono #text {
     font-family: var(--mono-font);
   }
-  textarea::placeholder { color: rgba(0,0,0,0.35); }
+  #text:empty::before { content: attr(data-placeholder); color: rgba(0,0,0,0.35); }
+  #text::-webkit-scrollbar { width: 8px; }
+  #text::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.18); border-radius: 4px; }
+  #text::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.32); }
+  body.dark #text::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
+  body.dark #text::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.35); }
+  @keyframes imgin { from { opacity: 0; transform: scale(0.985); } }
+  #text img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+    margin: 6px 0;
+    cursor: default;
+    animation: imgin 0.18s ease;
+  }
+  /* .selected mirrors "this image is inside the current selection" (kept in
+     sync from selectionchange) so a selected image reads clearly as a block,
+     like Notion — Chromium's own tint on <img> selection is too subtle. */
+  #text img.selected {
+    outline: 2.5px solid rgba(64, 128, 255, 0.9);
+    outline-offset: 1.5px;
+  }
 
   /* Dark theme readability */
-  body.dark textarea { color: #f2f2f2; }
-  body.dark textarea::placeholder { color: rgba(255,255,255,0.4); }
+  body.dark #text { color: #f2f2f2; }
+  body.dark #text:empty::before { color: rgba(255,255,255,0.4); }
   body.dark .bar { background: rgba(255,255,255,0.08); }
   body.dark .btn { color: rgba(255,255,255,0.7); }
   body.dark .btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
@@ -175,7 +203,7 @@
       <button class="btn" id="new" title="New note">＋</button>
       <button class="btn" id="close" title="Close note">✕</button>
     </div>
-    <textarea id="text" placeholder="Your private notes… (invisible to screen sharing)" spellcheck="false"></textarea>
+    <div id="text" contenteditable="true" spellcheck="false" data-placeholder="Your private notes… (invisible to screen sharing)"></div>
   </div>
   <script src="note.js"></script>
 </body>
