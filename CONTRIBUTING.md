@@ -22,7 +22,7 @@ If you have a new idea or found a bug that isn't already filed, **open a new iss
 2. **Comment** — leave a comment on the issue saying you'd like to work on it (e.g., *"I'd like to take this one"*). Wait for a maintainer to assign it to you.
 3. **Fork & branch** — fork the repo and create a branch named after the issue: `feat/issue-3-custom-shortcuts` or `fix/issue-2-windows-protection`.
 4. **Build & test** — make your changes locally, run the app, and make sure nothing is broken.
-5. **Open a PR** — submit a pull request against `main` and fill out the PR template. Reference the issue in your description (e.g., `Closes #3`).
+5. **Open a PR** — submit a pull request against `develop` and fill out the PR template. Reference the issue in your description (e.g., `Closes #3`).
 6. **Review** — a maintainer will review your PR. Address any feedback and the PR will be merged once it's approved.
 
 ---
@@ -57,12 +57,57 @@ npm run dist:win   # Windows
 
 ## Commit Messages
 
-Use short, descriptive commit messages in the imperative mood:
+This project follows the [Conventional Commits v1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) specification.
 
-- ✅ `Add monospace font toggle to note toolbar`
-- ✅ `Fix content protection not re-applied after sleep on Windows`
+### Format
+
+```
+<type>: <short description>
+<type>(<scope>): <short description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+### Types
+
+| Type | When to use |
+|------|-------------|
+| `feat` | A new feature |
+| `fix` | A bug fix |
+| `docs` | Documentation changes only |
+| `style` | Formatting, whitespace — no logic change |
+| `refactor` | Code restructure with no feature or fix |
+| `perf` | Performance improvements |
+| `test` | Adding or updating tests |
+| `chore` | Build process, dependencies, tooling |
+
+### Scopes (optional but encouraged)
+
+Use the filename or area of the app being changed:
+
+- `main`, `note`, `manager`, `platform`, `store`, `shortcuts`, `preload`
+- `docs`, `build`, `deps`
+
+### Examples
+
+- ✅ `feat(note): add monospace font toggle to toolbar`
+- ✅ `fix(platform): re-apply content protection after sleep on Windows`
+- ✅ `docs: update contributing guide with conventional commits`
+- ✅ `chore(deps): bump electron to v30`
 - ❌ `fixed stuff`
 - ❌ `WIP`
+
+### Breaking Changes
+
+Append `!` after the type/scope and add a `BREAKING CHANGE:` footer:
+
+```
+feat(store)!: change note storage format to JSON
+
+BREAKING CHANGE: existing notes in the old format will not be loaded automatically.
+```
 
 ---
 
