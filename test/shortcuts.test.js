@@ -152,5 +152,11 @@ test('formats accelerators the way this platform writes them', () => {
     platform.formatAccelerator('CommandOrControl+Alt+Shift+N'),
     platform.isMac ? '⌥⇧⌘N' : 'Ctrl+Alt+Shift+N'
   );
+  // CmdOrCtrl is Electron's documented alias for CommandOrControl and is used
+  // elsewhere in the app, so the formatter has to understand both spellings.
+  assert.equal(
+    platform.formatAccelerator('CmdOrCtrl+Q'),
+    platform.isMac ? '⌘Q' : 'Ctrl+Q'
+  );
   assert.equal(platform.formatAccelerator(''), '');
 });

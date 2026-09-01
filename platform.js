@@ -24,6 +24,7 @@ function isCommandOrControlPressed(input) {
 // process.platform branching — it just displays the string it is handed.
 const MAC_SYMBOLS = {
   CommandOrControl: '⌘',
+  CmdOrCtrl: '⌘',
   Command: '⌘',
   Cmd: '⌘',
   Control: '⌃',
@@ -35,6 +36,7 @@ const MAC_SYMBOLS = {
 const MAC_MODIFIER_ORDER = ['⌃', '⌥', '⇧', '⌘'];
 const WINDOWS_NAMES = {
   CommandOrControl: 'Ctrl',
+  CmdOrCtrl: 'Ctrl',
   Command: 'Ctrl',
   Cmd: 'Ctrl',
   Control: 'Ctrl',
