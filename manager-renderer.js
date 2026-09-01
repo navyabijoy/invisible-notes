@@ -244,17 +244,34 @@ const shortcutsReady = window.manager.shortcuts().then((list) => {
   render();
 });
 
+// The legend covers the whole window, so it behaves as a modal. aria-modal
+// tells assistive tech to ignore what is behind it but does nothing about the
+// tab order, so the rest of the UI is marked inert while the panel is open.
+// Focus moves into the panel and returns to wherever it came from on close —
+// without the restore, Escape would leave focus on a now-hidden button.
+const shortcutsCloseEl = document.getElementById('shortcutsClose');
+const behindTheSheet = [document.querySelector('.toolbar'), listEl, document.getElementById('version')];
+let focusBeforeShortcuts = null;
+
 async function openShortcuts() {
   await shortcutsReady;
+  if (!shortcutsEl.hidden) return;
+  focusBeforeShortcuts = document.activeElement;
   shortcutsEl.hidden = false;
+  for (const el of behindTheSheet) el.inert = true;
+  shortcutsCloseEl.focus();
 }
 
 function closeShortcuts() {
+  if (shortcutsEl.hidden) return;
+  for (const el of behindTheSheet) el.inert = false;
   shortcutsEl.hidden = true;
+  if (focusBeforeShortcuts && focusBeforeShortcuts.isConnected) focusBeforeShortcuts.focus();
+  focusBeforeShortcuts = null;
 }
 
 document.getElementById('shortcutsBtn').addEventListener('click', openShortcuts);
-document.getElementById('shortcutsClose').addEventListener('click', closeShortcuts);
+shortcutsCloseEl.addEventListener('click', closeShortcuts);
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !shortcutsEl.hidden) closeShortcuts();
