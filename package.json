@@ -29,8 +29,8 @@
     "overlay"
   ],
   "devDependencies": {
-    "electron": "^44.1.0",
-    "electron-builder": "^26.15.3"
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
   },
   "build": {
     "appId": "com.invisiblenotes.app",
