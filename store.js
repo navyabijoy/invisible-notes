@@ -35,8 +35,13 @@ function sanitizeWorkspaceName(input) {
 }
 
 function defaultWorkspace(overrides = {}) {
+  // A blank or whitespace-only id is not a usable identifier, so it is
+  // replaced rather than stored. Notes still pointing at the old value are
+  // reattached by normalizeWorkspaces, which reassigns any workspaceId that
+  // does not match a workspace that exists.
+  const id = typeof overrides.id === 'string' ? overrides.id.trim() : '';
   return {
-    id: overrides.id || nextWorkspaceId(),
+    id: id || nextWorkspaceId(),
     name: sanitizeWorkspaceName(overrides.name) || 'Untitled workspace',
     createdAt: overrides.createdAt || Date.now()
   };
@@ -105,12 +110,19 @@ function normalizeWorkspaces(data) {
   // Drop malformed entries and duplicate ids. A duplicate id would put two
   // identical-looking options in the dropdown while only one of them could
   // ever be selected, and would make note membership ambiguous.
+  //
+  // Normalize before deduping, so the check runs against the id actually
+  // being stored. Deduping on the raw value would treat two entries with a
+  // blank id as the same workspace and drop the second, even though
+  // defaultWorkspace gives each of them a distinct generated id.
   const seenIds = new Set();
   let workspaces = [];
-  for (const w of Array.isArray(data.workspaces) ? data.workspaces : []) {
-    if (!w || typeof w.id !== 'string' || seenIds.has(w.id)) continue;
-    seenIds.add(w.id);
-    workspaces.push(defaultWorkspace(w));
+  for (const entry of Array.isArray(data.workspaces) ? data.workspaces : []) {
+    if (!entry || typeof entry !== 'object') continue;
+    const workspace = defaultWorkspace(entry);
+    if (seenIds.has(workspace.id)) continue;
+    seenIds.add(workspace.id);
+    workspaces.push(workspace);
   }
 
   if (workspaces.length === 0) {
