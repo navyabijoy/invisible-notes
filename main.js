@@ -186,6 +186,20 @@ function reconcileOpenWindowsToDisplays() {
   }
 }
 
+// On Windows, SetWindowDisplayAffinity can be silently dropped after sleep,
+// screen lock, or display topology changes. Re-apply to every open note window.
+function reapplyContentProtectionToOpenWindows() {
+  if (!platform.isWindows) return;
+  for (const win of noteWindows.values()) {
+    applyContentProtection(win);
+  }
+}
+
+function reconcileOpenWindowsAfterSystemChange() {
+  reconcileOpenWindowsToDisplays();
+  reapplyContentProtectionToOpenWindows();
+}
+
 // ---------- IPC from renderer ----------
 ipcMain.on('note:update', (e, payload) => {
   if (!payload || typeof payload.id !== 'string') return;
@@ -335,14 +349,14 @@ if (!gotLock) {
       openManager: () => manager.openManagerWindow()
     });
 
-    screen.on('display-added', reconcileOpenWindowsToDisplays);
-    screen.on('display-removed', reconcileOpenWindowsToDisplays);
-    screen.on('display-metrics-changed', reconcileOpenWindowsToDisplays);
+    screen.on('display-added', reconcileOpenWindowsAfterSystemChange);
+    screen.on('display-removed', reconcileOpenWindowsAfterSystemChange);
+    screen.on('display-metrics-changed', reconcileOpenWindowsAfterSystemChange);
 
     // Waking from sleep can silently change the connected-display set before
     // the OS fires its own display events — re-check note positions either way.
-    powerMonitor.on('resume', reconcileOpenWindowsToDisplays);
-    powerMonitor.on('unlock-screen', reconcileOpenWindowsToDisplays);
+    powerMonitor.on('resume', reconcileOpenWindowsAfterSystemChange);
+    powerMonitor.on('unlock-screen', reconcileOpenWindowsAfterSystemChange);
   });
 
   app.on('before-quit', () => {

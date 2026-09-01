@@ -9,9 +9,12 @@ const { clampToVisibleDisplay } = require('./displayUtils');
 
 // Apply (or re-apply) screen-capture exclusion on a window.
 // On Windows, some Electron versions clear the SetWindowDisplayAffinity flag
-// when the window is hidden via win.hide(). This helper is called:
+// when the window is hidden via win.hide(), or when the system sleeps, locks,
+// or reinitializes the display. This helper is called:
 //   1. At window creation (inside 'ready-to-show', so the HWND fully exists)
 //   2. Every time a hidden note is shown again (see main.js showNote)
+//   3. On window show/restore events (Windows only, see createNoteWindow)
+//   4. After sleep/unlock/display changes (see main.js reconcileOpenWindowsAfterSystemChange)
 function applyContentProtection(win) {
   if (!win || win.isDestroyed()) return;
   win.setContentProtection(true);
@@ -42,6 +45,13 @@ function createNoteWindow(record, { onMoved, onResized, onClosed } = {}) {
   });
 
   platform.setPinned(win, record.pinned !== false);
+
+  // Defense-in-depth: re-apply capture exclusion whenever Windows shows or
+  // restores a note window (e.g. after minimize/restore or OS-driven show).
+  if (platform.isWindows) {
+    win.on('show', () => applyContentProtection(win));
+    win.on('restore', () => applyContentProtection(win));
+  }
 
   win.loadFile('note.html', { query: { id: record.id } });
 
