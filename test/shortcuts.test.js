@@ -8,6 +8,8 @@ const {
   registerFallbackShortcut,
   unregisterFallbackShortcut,
   shortcutNameForInput,
+  getShortcuts,
+  BINDINGS,
   FALLBACK_BINDING
 } = require('../shortcuts');
 
@@ -85,4 +87,70 @@ test('registers and unregisters the global recovery shortcut', () => {
 
   unregisterFallbackShortcut(globalShortcut);
   assert.equal(unregisteredBinding, FALLBACK_BINDING);
+});
+
+// The legend, the tray menu and the matcher all read from one definition list.
+// These guard the derivation, so a shortcut can never be displayed somewhere
+// as a binding the app does not actually answer to.
+// Builds the key event a user pressing this accelerator would actually
+// produce, so the assertion below tests the accelerator as written rather
+// than restating what the matcher already assumes.
+function inputForAccelerator(accelerator) {
+  const parts = accelerator.split('+');
+  const key = parts[parts.length - 1];
+  const modifiers = parts.slice(0, -1);
+  const primary = modifiers.includes('CommandOrControl');
+  return {
+    type: 'keyDown',
+    key,
+    code: `Key${key.toUpperCase()}`,
+    shift: modifiers.includes('Shift'),
+    alt: modifiers.includes('Alt'),
+    control: primary && !platform.isMac,
+    meta: primary && platform.isMac,
+    isAutoRepeat: false
+  };
+}
+
+test('every app-scoped shortcut in the legend is one the matcher recognizes', () => {
+  const appShortcuts = getShortcuts().filter((s) => s.scope === 'app');
+  assert.ok(appShortcuts.length > 0);
+
+  for (const shortcut of appShortcuts) {
+    assert.equal(
+      shortcutNameForInput(inputForAccelerator(shortcut.accelerator)),
+      shortcut.id,
+      `${shortcut.label} is listed as ${shortcut.accelerator} but the matcher does not answer to it`
+    );
+    assert.equal(shortcut.accelerator, BINDINGS[shortcut.id]);
+  }
+});
+
+test('the legend describes every shortcut and formats it for this platform', () => {
+  for (const shortcut of getShortcuts()) {
+    assert.ok(shortcut.label, `${shortcut.id} has no label`);
+    assert.ok(shortcut.description, `${shortcut.id} has no description`);
+    assert.equal(shortcut.display, platform.formatAccelerator(shortcut.accelerator));
+    assert.ok(!shortcut.display.includes('CommandOrControl'), 'display string is not human-readable');
+  }
+});
+
+test('the legend lists the global recovery shortcut alongside the app ones', () => {
+  const global = getShortcuts().filter((s) => s.scope === 'global');
+  assert.equal(global.length, 1);
+  assert.equal(global[0].accelerator, FALLBACK_BINDING);
+});
+
+test('formats accelerators the way this platform writes them', () => {
+  assert.equal(
+    platform.formatAccelerator('CommandOrControl+Shift+N'),
+    platform.isMac ? '⇧⌘N' : 'Ctrl+Shift+N'
+  );
+  // macOS orders modifiers ctrl-opt-shift-cmd regardless of how the
+  // accelerator was written; Windows keeps the written order.
+  assert.equal(
+    platform.formatAccelerator('CommandOrControl+Alt+Shift+N'),
+    platform.isMac ? '⌥⇧⌘N' : 'Ctrl+Alt+Shift+N'
+  );
+  assert.equal(platform.formatAccelerator(''), '');
 });
