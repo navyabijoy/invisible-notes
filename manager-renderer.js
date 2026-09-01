@@ -57,7 +57,22 @@ function render() {
   listEl.innerHTML = '';
 
   if (notes.length === 0) {
-    listEl.innerHTML = `<div class="empty">${ICONS.notes}<div>No notes yet.<br/>Click "New" or press &#8984;&#8679;N (Ctrl+Shift+N) to create one.</div></div>`;
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.innerHTML = ICONS.notes;
+
+    const message = document.createElement('div');
+    message.textContent = 'No notes yet.';
+    message.appendChild(document.createElement('br'));
+    const newNoteKeys = shortcutDisplay('newNote');
+    message.appendChild(
+      document.createTextNode(
+        newNoteKeys ? `Click "New" or press ${newNoteKeys} to create one.` : 'Click "New" to create one.'
+      )
+    );
+
+    empty.appendChild(message);
+    listEl.appendChild(empty);
     return;
   }
   if (filtered.length === 0) {
@@ -163,6 +178,11 @@ const SCOPE_SECTIONS = [
   }
 ];
 
+function shortcutDisplay(id) {
+  const match = shortcuts.find((s) => s.id === id);
+  return match ? match.display : '';
+}
+
 function shortcutRow(shortcut) {
   const row = document.createElement('div');
   row.className = 'sc-row';
@@ -215,10 +235,13 @@ function renderShortcuts(shortcuts) {
   }
 }
 
-// Loaded once at startup; the definitions cannot change while the app runs.
+// Loaded once at startup: the legend needs it, and so does the empty state's
+// "or press …" hint. Re-renders the list because that hint can only be filled
+// in once the bindings have arrived.
 const shortcutsReady = window.manager.shortcuts().then((list) => {
   shortcuts = list;
   renderShortcuts(shortcuts);
+  render();
 });
 
 async function openShortcuts() {

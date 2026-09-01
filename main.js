@@ -18,7 +18,8 @@ const { clampToVisibleDisplay, displayIdForPoint } = require('./displayUtils');
 const {
   registerShortcuts,
   registerFallbackShortcut,
-  unregisterFallbackShortcut
+  unregisterFallbackShortcut,
+  getShortcuts
 } = require('./shortcuts');
 const { createManagerModule } = require('./manager');
 
@@ -286,12 +287,21 @@ function buildNotesSubmenu() {
 function updateTrayMenu() {
   if (!tray) return;
   const caveat = platform.captureExclusionCaveat();
+  // Accelerators come from the shortcut definitions rather than being spelled
+  // out again here, so the tray can never advertise a binding the app has
+  // stopped answering to.
+  const accelerator = Object.fromEntries(getShortcuts().map((s) => [s.id, s.accelerator]));
   const menu = Menu.buildFromTemplate([
-    { label: 'New Note', accelerator: 'CmdOrCtrl+Shift+N', click: () => createNoteNearCursor() },
-    { label: 'Notes Manager…', accelerator: 'CmdOrCtrl+Shift+M', click: () => manager.openManagerWindow() },
+    { label: 'New Note', accelerator: accelerator.newNote, click: () => createNoteNearCursor() },
+    { label: 'Notes Manager…', accelerator: accelerator.openManager, click: () => manager.openManagerWindow() },
     { label: 'Notes', submenu: buildNotesSubmenu() },
-    { label: 'Hide/Show All', accelerator: 'CmdOrCtrl+Shift+H', click: () => toggleHideAll() },
-    { label: 'Toggle Click-Through (all)', accelerator: 'CmdOrCtrl+Shift+G', click: () => toggleGhostAll() },
+    { label: 'Hide/Show All', accelerator: accelerator.toggleHideAll, click: () => toggleHideAll() },
+    { label: 'Toggle Click-Through (all)', accelerator: accelerator.toggleGhostAll, click: () => toggleGhostAll() },
+    { type: 'separator' },
+    {
+      label: 'Keyboard Shortcuts…',
+      click: () => manager.openManagerWindow({ showShortcuts: true })
+    },
     { type: 'separator' },
     { label: 'Notes are invisible to screen sharing ✓', enabled: false },
     ...(caveat ? [{ label: caveat, enabled: false }] : []),
