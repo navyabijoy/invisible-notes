@@ -308,26 +308,51 @@
   }
 
   /* Per-card "move to workspace" control. Only rendered when more than one
-     workspace exists, so a single-workspace user never sees it. */
-  .move-select {
-    max-width: 30px;
-    border: none;
-    background: transparent;
+     workspace exists, so a single-workspace user never sees it.
+     The icon is the visible affordance and the select sits transparently on
+     top of it, sized to match .icon-btn. Showing the select's own label here
+     would render a clipped fragment of the workspace name next to a native
+     arrow inside 30px, and widening it on hover shifted the card layout. */
+  .move-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    flex: 0 0 auto;
     border-radius: 8px;
-    padding: 6px 4px;
-    font-size: 12px;
-    font-family: inherit;
     color: var(--muted);
-    cursor: pointer;
-    outline: none;
-    transition: background 0.15s, color 0.15s, max-width 0.15s;
+    transition: background 0.15s, color 0.15s;
   }
-  .move-select:hover,
-  .move-select:focus {
-    max-width: 120px;
+  .move-wrap:hover { background: var(--surface-2); color: var(--ink); }
+  .move-wrap:focus-within {
     background: var(--surface-2);
     color: var(--ink);
+    box-shadow: 0 0 0 2px var(--accent-lt);
   }
+  .move-wrap > svg { pointer-events: none; }
+
+  .move-select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    color: transparent;
+    font-family: inherit;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  /* The open dropdown is a native widget rendered outside the page's own
+     styling, so it does not inherit the transparent colour above and the
+     options need one of their own to stay readable. */
+  .move-select option { color: var(--ink); }
 
   #version {
     flex: 0 0 auto;
