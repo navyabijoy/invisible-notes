@@ -4,6 +4,8 @@
 // touches the store directly — main.js stays the single source of truth.
 const path = require('path');
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { registerShortcuts } = require('./shortcuts');
+const { sanitizeWorkspaceName } = require('./store');
 
 const MAX_TITLE_LENGTH = 80;
 
@@ -15,9 +17,20 @@ function sanitizeTitle(input) {
 function createManagerModule({ store, actions }) {
   let win = null;
 
+  // One payload for both the initial load and every update, so the renderer
+  // always sees notes and workspaces from the same consistent snapshot. A
+  // note can never render against a workspace list that doesn't contain it.
+  function snapshot() {
+    return {
+      notes: store.all(),
+      workspaces: store.workspaces(),
+      activeWorkspace: store.activeWorkspaceId()
+    };
+  }
+
   function notifyChanged() {
     if (win && !win.isDestroyed()) {
-      win.webContents.send('manager:notesChanged', store.all());
+      win.webContents.send('manager:notesChanged', snapshot());
     }
   }
 
@@ -41,6 +54,12 @@ function createManagerModule({ store, actions }) {
       }
     });
     win.setMenuBarVisibility(false);
+    registerShortcuts(win, {
+      newNote: actions.createNote,
+      toggleHideAll: actions.toggleHideAll,
+      toggleGhostAll: actions.toggleGhostAll,
+      openManager: openManagerWindow
+    });
     win.loadFile('manager.html');
     win.once('ready-to-show', () => win.show());
     win.on('closed', () => {
@@ -48,8 +67,72 @@ function createManagerModule({ store, actions }) {
     });
   }
 
-  ipcMain.handle('manager:list', () => store.all());
+  ipcMain.handle('manager:list', () => snapshot());
   ipcMain.handle('manager:version', () => app.getVersion());
+
+  // ---------- Workspaces (issue #8) ----------
+  ipcMain.on('manager:setWorkspace', (e, id) => {
+    if (typeof id !== 'string') return;
+    actions.setActiveWorkspace(id);
+  });
+
+  ipcMain.on('manager:createWorkspace', (e, name) => {
+    const clean = sanitizeWorkspaceName(name);
+    if (!clean) return;
+    actions.createWorkspace(clean);
+  });
+
+  ipcMain.on('manager:renameWorkspace', (e, payload) => {
+    if (!payload || typeof payload.id !== 'string') return;
+    const clean = sanitizeWorkspaceName(payload.name);
+    if (!clean) return;
+    actions.renameWorkspace(payload.id, clean);
+  });
+
+  ipcMain.on('manager:moveNote', (e, payload) => {
+    if (!payload || typeof payload.id !== 'string' || typeof payload.workspaceId !== 'string') return;
+    actions.moveNoteToWorkspace(payload.id, payload.workspaceId);
+  });
+
+  // Deleting a workspace never deletes notes, it reassigns them. The
+  // confirmation says so explicitly, and names the count, so the user is
+  // never guessing what happens to the notes inside.
+  ipcMain.on('manager:deleteWorkspace', async (e, id) => {
+    if (typeof id !== 'string') return;
+    const workspace = store.getWorkspace(id);
+    if (!workspace) return;
+    if (store.workspaces().length <= 1) {
+      await dialog.showMessageBox(BrowserWindow.fromWebContents(e.sender) || undefined, {
+        type: 'info',
+        buttons: ['OK'],
+        title: 'Cannot delete workspace',
+        message: 'This is your only workspace.',
+        detail: 'Create another workspace first. Ghost Notes always keeps at least one.'
+      });
+      return;
+    }
+
+    const noteCount = store.notesInWorkspace(id).length;
+    const plural = noteCount === 1 ? '' : 's';
+    // Name the workspace the notes will actually land in. Hardcoding
+    // "Default" is wrong once that workspace has been renamed or deleted.
+    const fallback = store.fallbackWorkspaceFor(id);
+    const detail = noteCount === 0
+      ? 'This workspace is empty. No notes will be affected.'
+      : `Its ${noteCount} note${plural} will be moved to "${fallback.name}", not deleted.`;
+
+    const targetWindow = BrowserWindow.fromWebContents(e.sender) || undefined;
+    const { response } = await dialog.showMessageBox(targetWindow, {
+      type: 'warning',
+      buttons: ['Cancel', 'Delete workspace'],
+      defaultId: 0,
+      cancelId: 0,
+      title: 'Delete workspace',
+      message: `Delete the workspace "${workspace.name}"?`,
+      detail
+    });
+    if (response === 1) actions.removeWorkspace(id);
+  });
 
   ipcMain.on('manager:new', () => actions.createNote());
 

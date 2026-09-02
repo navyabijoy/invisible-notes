@@ -62,6 +62,7 @@ This project follows the [Conventional Commits v1.0.0](https://www.conventionalc
 ### Format
 
 ```
+<type>: <short description>
 <type>(<scope>): <short description>
 
 [optional body]

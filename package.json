@@ -4,6 +4,7 @@
   "description": "Ghost Notes: translucent sticky notes that stay invisible to screen sharing and recording.",
   "main": "main.js",
   "scripts": {
+    "test": "node --test",
     "start": "electron .",
     "dist": "electron-builder",
     "dist:mac": "electron-builder --mac",

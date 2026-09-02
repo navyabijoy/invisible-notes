@@ -10,6 +10,13 @@ function hideDockIconIfMac(app) {
   if (isMac && app.dock) app.dock.hide();
 }
 
+// Electron reports Command and Control separately in before-input-event.
+// Treat only the platform's primary shortcut modifier as CmdOrCtrl so an
+// additional modifier does not accidentally trigger an app shortcut.
+function isCommandOrControlPressed(input) {
+  return isMac ? !!input.meta && !input.control : !!input.control && !input.meta;
+}
+
 // Pin/unpin a note window. Pinned = always-on-top, stays above whatever
 // app you switch to. Unpinned = a normal window that other apps can cover
 // when they're brought to the front, on both macOS and Windows.
@@ -48,6 +55,7 @@ module.exports = {
   isMac,
   isWindows,
   hideDockIconIfMac,
+  isCommandOrControlPressed,
   setPinned,
   captureExclusionCaveat
 };
