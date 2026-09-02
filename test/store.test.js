@@ -294,7 +294,22 @@ test('normalizeImport returns null for a payload that is not a backup', () => {
 });
 
 test('normalizeImport accepts a valid empty backup', () => {
+  assert.deepEqual(normalizeImport({ app: 'ghost-notes', version: STORE_VERSION, notes: [] }), []);
   assert.deepEqual(normalizeImport({ version: STORE_VERSION, notes: [] }), []);
+});
+
+test('normalizeImport rejects empty notes without a backup marker', () => {
+  assert.equal(normalizeImport({ notes: [] }), null);
+  assert.equal(normalizeImport({ app: 'other-app', notes: [] }), null);
+});
+
+test('normalizeImport preserves a valid epoch timestamp of 0', () => {
+  const records = normalizeImport({
+    version: STORE_VERSION,
+    notes: [{ id: 'a', createdAt: 0, updatedAt: 0 }]
+  });
+  assert.equal(records[0].createdAt, 0);
+  assert.equal(records[0].updatedAt, 0);
 });
 
 test('normalizeImport coerces malformed numeric fields to sane values', () => {

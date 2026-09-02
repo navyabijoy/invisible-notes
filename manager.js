@@ -6,8 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const { registerShortcuts } = require('./shortcuts');
-const { sanitizeWorkspaceName } = require('./store');
-const { STORE_VERSION, normalizeImport } = require('./store');
+const { sanitizeWorkspaceName, STORE_VERSION, normalizeImport } = require('./store');
 
 const MAX_TITLE_LENGTH = 80;
 

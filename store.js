@@ -202,11 +202,23 @@ function migrate(data) {
 // Returns null when the payload is not a notes file at all.
 function normalizeImport(data) {
   if (!data || typeof data !== 'object' || !Array.isArray(data.notes)) return null;
+  // An empty array is intentionally importable (so "Replace" can clear notes),
+  // but that means any random JSON with notes: [] would otherwise pass. Exports
+  // always write the app marker and a numeric version, so require one of those
+  // when there is nothing else to look at.
+  if (data.notes.length === 0 && data.app !== 'ghost-notes' && !Number.isFinite(data.version)) return null;
   const seen = new Set();
   const notes = [];
   for (const entry of migrate(data).notes) {
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
+    // defaultRecord() uses overrides.createdAt || Date.now(), so a valid epoch
+    // timestamp of 0 would be overwritten before the checks below run. Capture
+    // the raw values and restore them when they are actually finite.
+    const rawCreatedAt = entry.createdAt;
+    const rawUpdatedAt = entry.updatedAt;
     const record = defaultRecord(entry);
+    if (Number.isFinite(rawCreatedAt)) record.createdAt = rawCreatedAt;
+    if (Number.isFinite(rawUpdatedAt)) record.updatedAt = rawUpdatedAt;
     if (typeof record.id !== 'string' || !record.id) record.id = nextId();
     if (seen.has(record.id)) continue;
     seen.add(record.id);
