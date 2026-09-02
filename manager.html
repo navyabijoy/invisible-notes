@@ -315,6 +315,15 @@
   }
   .icon-btn:hover { background: var(--surface-2); color: var(--ink); }
   .icon-btn.danger:hover { background: #fdecec; color: #d3392e; }
+  /* Keyboard users need a visible focus indicator on the icon-only controls,
+     which have no text label to rely on. */
+  .btn-icon:focus-visible,
+  .icon-btn:focus-visible,
+  .move-wrap:focus-visible,
+  #workspaceSelect:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
   .actions-divider {
     width: 1px;
     height: 18px;

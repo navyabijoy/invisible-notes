@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const { NoteStore, STORE_VERSION, DEFAULT_WORKSPACE_ID } = require('../store');
+const { NoteStore, normalizeImport, STORE_VERSION, DEFAULT_WORKSPACE_ID } = require('../store');
 
 const tempDirs = [];
 const stores = [];
@@ -284,4 +284,67 @@ test('malformed entries are dropped without taking valid notes with them', () =>
   assert.equal(store.get('a').text, 'real');
   assert.equal(store.get('b').text, 'also real');
   assert.ok(store.all().every((n) => !!store.getWorkspace(n.workspaceId)));
+});
+
+test('normalizeImport returns null for a payload that is not a backup', () => {
+  assert.equal(normalizeImport(null), null);
+  assert.equal(normalizeImport({}), null);
+  assert.equal(normalizeImport({ notes: 'nope' }), null);
+  assert.equal(normalizeImport(42), null);
+});
+
+test('normalizeImport accepts a valid empty backup', () => {
+  assert.deepEqual(normalizeImport({ version: STORE_VERSION, notes: [] }), []);
+});
+
+test('normalizeImport coerces malformed numeric fields to sane values', () => {
+  const records = normalizeImport({
+    version: STORE_VERSION,
+    notes: [{
+      id: 'a',
+      width: NaN,
+      height: 5,
+      opacity: 2,
+      fontSize: 'large',
+      x: Infinity,
+      y: 'nope',
+      createdAt: 'today'
+    }]
+  });
+  assert.equal(records.length, 1);
+  const r = records[0];
+  assert.equal(r.width, 300);
+  assert.equal(r.height, 220);
+  assert.equal(r.opacity, 0.85);
+  assert.equal(r.fontSize, 15);
+  assert.equal(r.x, undefined);
+  assert.equal(r.y, undefined);
+  assert.equal(typeof r.createdAt, 'number');
+  assert.equal(r.updatedAt, r.createdAt);
+});
+
+test('normalizeImport drops duplicate and malformed entries', () => {
+  const records = normalizeImport({
+    version: STORE_VERSION,
+    notes: [
+      { id: 'a', text: 'one' },
+      { id: 'a', text: 'duplicate' },
+      null,
+      42,
+      { id: 'b', text: 'two' }
+    ]
+  });
+  assert.deepEqual(records.map((r) => r.id), ['a', 'b']);
+});
+
+test('replaceAll replaces notes but preserves settings and workspaces', () => {
+  const store = freshStore();
+  const ws = store.createWorkspace('Work');
+  store.create({ text: 'before', workspaceId: ws.id });
+
+  store.replaceAll([{ id: 'imported', text: 'after', workspaceId: ws.id }]);
+
+  assert.deepEqual(store.all().map((n) => n.id), ['imported']);
+  assert.equal(store.getWorkspace(ws.id).name, 'Work');
+  assert.equal(store.activeWorkspaceId(), DEFAULT_WORKSPACE_ID);
 });

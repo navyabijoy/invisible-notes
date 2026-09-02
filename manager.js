@@ -222,7 +222,10 @@ function createManagerModule({ store, actions }) {
     } catch (_) {
       records = null;
     }
-    if (!records || records.length === 0) {
+    // null means the file isn't a backup at all. An empty array is a valid
+    // backup (notes: []) — e.g. exported from a fresh install — and must be
+    // importable so "Replace" can clear local notes.
+    if (!records) {
       dialog.showErrorBox(
         'Could not import notes',
         'That file is not a valid Ghost Notes backup — it contains no readable notes.'
