@@ -279,6 +279,14 @@ function importNotes(records, mode) {
   let added = 0;
   let skipped = 0;
 
+  // Imported records can carry workspaceIds from the backup that don't exist
+  // locally (import doesn't restore workspaces). Those notes would become
+  // unreachable — the manager filters by active workspace — so remap any
+  // unknown id onto the active workspace before saving.
+  const workspaceIds = new Set(store.workspaces().map((w) => w.id));
+  const fallbackWorkspaceId = store.activeWorkspaceId();
+  records = records.map((r) => (workspaceIds.has(r.workspaceId) ? r : { ...r, workspaceId: fallbackWorkspaceId }));
+
   if (mode === 'replace') {
     // Close every note window first so no window outlives its record — and
     // no window keeps stale content for an imported record that happens to
@@ -313,7 +321,7 @@ function importNotes(records, mode) {
     if (safe.x !== record.x || safe.y !== record.y) {
       store.update(record.id, { x: safe.x, y: safe.y, width: safe.width, height: safe.height, displayId: safe.displayId });
     }
-    if (record.visible) openNoteWindow(store.get(record.id));
+    if (record.visible && record.workspaceId === store.activeWorkspaceId()) openNoteWindow(store.get(record.id));
   }
 
   updateTrayMenu();

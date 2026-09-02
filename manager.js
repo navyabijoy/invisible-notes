@@ -193,7 +193,7 @@ function createManagerModule({ store, actions }) {
       notes: store.all()
     };
     try {
-      fs.writeFileSync(filePath, JSON.stringify(payload, null, 2), 'utf8');
+      await fs.promises.writeFile(filePath, JSON.stringify(payload, null, 2), 'utf8');
     } catch (_) {
       dialog.showErrorBox(
         'Could not export notes',
@@ -217,7 +217,8 @@ function createManagerModule({ store, actions }) {
 
     let records = null;
     try {
-      records = normalizeImport(JSON.parse(fs.readFileSync(filePaths[0], 'utf8')));
+      const raw = await fs.promises.readFile(filePaths[0], 'utf8');
+      records = normalizeImport(JSON.parse(raw));
     } catch (_) {
       records = null;
     }

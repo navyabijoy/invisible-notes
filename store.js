@@ -213,11 +213,13 @@ function normalizeImport(data) {
     if (typeof record.title !== 'string') record.title = '';
     if (typeof record.text !== 'string') record.text = '';
     if (typeof record.color !== 'string') record.color = 'yellow';
-    if (typeof record.fontSize !== 'number') record.fontSize = 15;
-    if (typeof record.x !== 'number') record.x = undefined;
-    if (typeof record.y !== 'number') record.y = undefined;
-    if (typeof record.createdAt !== 'number') record.createdAt = Date.now();
-    if (typeof record.updatedAt !== 'number') record.updatedAt = record.createdAt;
+    // typeof alone lets NaN/Infinity through; only finite numbers are valid
+    // for sizes, positions and timestamps.
+    if (!Number.isFinite(record.fontSize)) record.fontSize = 15;
+    if (!Number.isFinite(record.x)) record.x = undefined;
+    if (!Number.isFinite(record.y)) record.y = undefined;
+    if (!Number.isFinite(record.createdAt)) record.createdAt = Date.now();
+    if (!Number.isFinite(record.updatedAt)) record.updatedAt = record.createdAt;
     notes.push(record);
   }
   return notes;
