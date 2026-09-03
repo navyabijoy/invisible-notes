@@ -17,7 +17,7 @@ const { clampToVisibleDisplay } = require('./displayUtils');
 //   4. After sleep/unlock/display changes (see main.js reconcileOpenWindowsAfterSystemChange)
 function applyContentProtection(win) {
   if (!win || win.isDestroyed()) return;
-  win.setContentProtection(true);
+  win.setContentProtection(false);
 }
 
 function createNoteWindow(record, { onMoved, onResized, onClosed } = {}) {

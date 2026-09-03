@@ -35,7 +35,24 @@ function label(note) {
 }
 
 function snippet(note) {
-  return (note.text || '').replace(/\s+/g, ' ').trim();
+  let text = note.text || '';
+  if (note.rich) {
+    text = text
+      .replace(/<br\s*[\/]?>/gi, '\n')
+      .replace(/<\/(div|p|h1|h2|h3|li|pre|blockquote|ul|ol)>/gi, '\n')
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/[ \t]+/g, ' ')
+      .trim();
+  } else {
+    text = text.replace(/[ \t]+/g, ' ').trim();
+  }
+  return text.split('\n')[0].substring(0, 100);
 }
 
 function relativeTime(ts) {
@@ -162,7 +179,10 @@ function render() {
     deleteBtn.className = 'icon-btn danger';
     deleteBtn.title = 'Delete permanently';
     deleteBtn.innerHTML = ICONS.trash;
-    deleteBtn.addEventListener('click', () => window.manager.delete(note.id));
+    deleteBtn.addEventListener('click', () => {
+      noteToDelete = note.id;
+      document.getElementById('deleteModal').classList.add('open');
+    });
 
     actions.appendChild(deleteBtn);
 
@@ -388,5 +408,20 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !shortcutsEl.hidden) closeShortcuts();
 });
 
+let noteToDelete = null;
+const modal = document.getElementById('deleteModal');
+
+document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
+  modal.classList.remove('open');
+  noteToDelete = null;
+});
+
+document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+  if (noteToDelete) {
+    window.manager.delete(noteToDelete);
+    noteToDelete = null;
+  }
+  modal.classList.remove('open');
+});
 // Opened straight onto the legend from the tray's "Keyboard Shortcuts…" item.
 window.manager.onShowShortcuts(openShortcuts);

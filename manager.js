@@ -163,21 +163,13 @@ function createManagerModule({ store, actions }) {
     actions.renameNote(payload.id, sanitizeTitle(payload.title));
   });
 
-  ipcMain.on('manager:delete', async (e, id) => {
+  ipcMain.on('manager:delete', (e, id) => {
     if (typeof id !== 'string') return;
+    const targetWindow = BrowserWindow.fromWebContents(e.sender) || undefined;
+    if (targetWindow !== win) return;
     const record = store.get(id);
     if (!record) return;
-    const targetWindow = BrowserWindow.fromWebContents(e.sender) || undefined;
-    const { response } = await dialog.showMessageBox(targetWindow, {
-      type: 'warning',
-      buttons: ['Cancel', 'Delete'],
-      defaultId: 0,
-      cancelId: 0,
-      title: 'Delete note',
-      message: 'Delete this note permanently?',
-      detail: 'This cannot be undone. The note will be removed from this device.'
-    });
-    if (response === 1) actions.deleteNoteRecord(id);
+    actions.deleteNoteRecord(id);
   });
 
   return { openManagerWindow, notifyChanged };

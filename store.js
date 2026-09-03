@@ -63,6 +63,7 @@ function defaultRecord(overrides = {}) {
     fontSize: overrides.fontSize || 15,
     // Per-note monospace toggle for code walkthroughs (issue #7).
     monospace: !!overrides.monospace,
+    rich: !!overrides.rich,
     // Which workspace this note belongs to (issue #8). Independent of
     // `visible`. See the note on effective visibility below.
     workspaceId: overrides.workspaceId || DEFAULT_WORKSPACE_ID,

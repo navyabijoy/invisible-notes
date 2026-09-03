@@ -327,9 +327,10 @@ function reconcileOpenWindowsAfterSystemChange() {
 // ---------- IPC from renderer ----------
 ipcMain.on('note:update', (e, payload) => {
   if (!payload || typeof payload.id !== 'string') return;
-  const { id, text, color, opacity, fontSize, monospace, ghost } = payload;
+  const { id, text, rich, color, opacity, fontSize, monospace, ghost } = payload;
   const patch = {};
   if (typeof text === 'string') patch.text = text;
+  if (typeof rich === 'boolean') patch.rich = rich;
   if (typeof color === 'string') patch.color = color;
   if (typeof opacity === 'number') patch.opacity = opacity;
   if (typeof fontSize === 'number') patch.fontSize = fontSize;
@@ -383,7 +384,24 @@ function buildTrayIcon() {
 }
 
 function noteLabel(record) {
-  const snippet = (record.title || record.text || '').replace(/\s+/g, ' ').trim().slice(0, 30);
+  let cleanText = record.text || '';
+  if (record.rich) {
+    cleanText = cleanText
+      .replace(/<br\s*[\/]?>/gi, ' ')
+      .replace(/<\/(div|p|h1|h2|h3|li|pre|blockquote|ul|ol)>/gi, ' ')
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\s+/g, ' ')
+      .trim();
+  } else {
+    cleanText = cleanText.replace(/\s+/g, ' ').trim();
+  }
+  const snippet = (record.title || cleanText).slice(0, 30);
   return snippet || 'Untitled note';
 }
 

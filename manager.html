@@ -298,7 +298,8 @@
     transition: background 0.15s, color 0.15s;
   }
   .icon-btn:hover { background: var(--surface-2); color: var(--ink); }
-  .icon-btn.danger:hover { background: #fdecec; color: #d3392e; }
+  .icon-btn.danger { color: #d3392e; }
+  .icon-btn.danger:hover { background: #fdecec; color: #a9241b; }
   .actions-divider {
     width: 1px;
     height: 18px;
@@ -363,98 +364,40 @@
     border-top: 1px solid var(--border);
     background: var(--surface);
   }
-  /* ─── Shortcut legend ─────────────────────────────────── */
-  .toolbar .icon-btn {
-    flex: 0 0 auto;
-    border: 1px solid var(--border);
-    background: var(--surface);
-  }
-  .toolbar .icon-btn:hover { background: var(--surface-2); }
 
-  .sheet {
-    position: absolute;
-    inset: 0;
-    z-index: 10;
-    display: flex;
-    flex-direction: column;
-    background: var(--bg);
-  }
-  /* `display: flex` above outranks the user-agent's [hidden] rule, so the
-     panel needs its own — without this it is never actually hidden. */
-  .sheet[hidden] { display: none; }
-  .sheet-head {
-    flex: 0 0 auto;
-    display: flex;
+  /* ─── Modal ────────────────────────────────────────────── */
+  .modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(4px);
+    display: none;
     align-items: center;
-    gap: 10px;
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--border);
+    justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open { display: flex; opacity: 1; }
+  .modal {
     background: var(--surface);
+    border-radius: 12px;
+    width: 300px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    text-align: center;
+    transform: scale(0.95);
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
-  .sheet-head h2 {
-    flex: 1;
-    font-size: 14px;
-    font-weight: 650;
-    letter-spacing: -0.01em;
-  }
-  .sheet-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px 16px 22px;
-  }
-
-  .sc-group + .sc-group { margin-top: 22px; }
-  .sc-group-title {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--muted-2);
-    margin-bottom: 5px;
-  }
-  .sc-group-note {
-    font-size: 11.5px;
-    line-height: 1.5;
-    color: var(--muted);
-    margin-bottom: 10px;
-  }
-
-  .sc-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
-    border-radius: var(--r);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    box-shadow: var(--sh);
-  }
-  .sc-row + .sc-row { margin-top: 6px; }
-  .sc-text { flex: 1; min-width: 0; }
-  .sc-label {
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-  }
-  .sc-desc {
-    font-size: 11.5px;
-    line-height: 1.45;
-    color: var(--muted);
-    margin-top: 2px;
-  }
-  .sc-keys {
-    flex: 0 0 auto;
-    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-    font-size: 11.5px;
-    font-weight: 600;
-    color: var(--ink-2);
-    background: var(--surface-2);
-    border: 1px solid var(--border-2);
-    border-bottom-width: 2px;
-    border-radius: 6px;
-    padding: 4px 8px;
-    white-space: nowrap;
-  }
+  .modal-overlay.open .modal { transform: scale(1); }
+  .modal h3 { margin-bottom: 10px; font-size: 16px; color: var(--ink); }
+  .modal p { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.4; }
+  .modal-actions { display: flex; gap: 10px; justify-content: center; }
+  .modal-actions .btn { flex: 1; justify-content: center; }
+  .modal-actions .btn.cancel { background: var(--surface-2); color: var(--ink); border: 1px solid var(--border); }
+  .modal-actions .btn.cancel:hover { background: var(--border); }
+  .modal-actions .btn.danger { background: #d3392e; color: #fff; }
+  .modal-actions .btn.danger:hover { background: #a9241b; }
 </style>
 </head>
 <body>
@@ -499,6 +442,16 @@
   <div class="list" id="list"></div>
   <div id="version"></div>
 
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle" tabindex="-1">
+      <h3 id="deleteModalTitle">Delete Note</h3>
+      <p>Are you sure you want to delete this note permanently? This cannot be undone.</p>
+      <div class="modal-actions">
+        <button class="btn cancel" id="cancelDeleteBtn" type="button">Cancel</button>
+        <button class="btn danger" id="confirmDeleteBtn" type="button">Delete</button>
+      </div>
+    </div>
+  </div>
   <div class="sheet" id="shortcuts" hidden role="dialog" aria-modal="true" aria-labelledby="shortcutsTitle">
     <div class="sheet-head">
       <h2 id="shortcutsTitle">Keyboard Shortcuts</h2>

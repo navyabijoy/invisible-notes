@@ -128,7 +128,7 @@
     cursor: pointer;
   }
 
-  textarea {
+  .editor {
     flex: 1;
     width: 100%;
     resize: none;
@@ -139,21 +139,129 @@
     font-size: var(--font-size);
     line-height: 1.45;
     color: #1c1c1c;
-    -webkit-user-select: text;
-    user-select: text;
+    -webkit-user-select: auto;
+    user-select: auto;
     font-family: inherit;
+    overflow-y: auto;
+    cursor: text;
+    white-space: pre-wrap;
+    word-break: break-word;
   }
-  .note.mono textarea {
+  .editor[placeholder]:empty:before {
+    content: attr(placeholder);
+    color: rgba(0,0,0,0.35);
+    pointer-events: none;
+  }
+  .note.mono .editor {
     font-family: var(--mono-font);
   }
-  textarea::placeholder { color: rgba(0,0,0,0.35); }
+  
+  .editor h1 { font-size: calc(var(--font-size) * 1.35); margin: 0.2em 0; font-weight: bold; }
+  .editor h2 { font-size: calc(var(--font-size) * 1.15); margin: 0.2em 0; font-weight: 600; }
+  .editor h3 { font-size: calc(var(--font-size) * 0.9); margin: 0.2em 0; font-weight: 600; color: var(--muted); }
+  .editor pre { font-family: var(--mono-font); font-size: calc(var(--font-size) * 0.9); background: rgba(0,0,0,0.05); padding: 2px 4px; border-radius: 4px; display: inline-block; }
+  .editor ul, .editor ol { padding-left: 1.5em; margin: 0.2em 0; }
+  .editor blockquote { border-left: 3px solid rgba(0,0,0,0.2); padding-left: 0.8em; margin: 0.2em 0; color: rgba(0,0,0,0.7); }
+  body.dark .editor blockquote { border-left-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.7); }
+  
+  .format-control { position: relative; -webkit-app-region: no-drag; }
+  .format-popover {
+    position: absolute;
+    top: 26px; right: 0; left: auto;
+    padding: 4px;
+    border-radius: 9px;
+    background: rgba(250, 250, 252, 0.98);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+    -webkit-app-region: no-drag;
+    opacity: 0;
+    transform: translateY(-4px);
+    pointer-events: none;
+    transition: opacity 0.12s ease, transform 0.12s ease;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    min-width: 140px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+  }
+  .format-popover.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  body.dark .format-popover { background: rgba(46, 48, 54, 0.98); }
+  
+  .format-btn {
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 8px 10px;
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 6px;
+    color: var(--ink);
+    transition: background 0.15s;
+    font-family: inherit;
+    position: relative;
+    margin-bottom: 2px;
+  }
+  .format-btn:last-child { margin-bottom: 0; }
+  .format-btn:hover { background: rgba(0, 0, 0, 0.05); }
+  body.dark .format-btn:hover { background: rgba(255, 255, 255, 0.08); }
+  .format-btn.active {
+    background: rgba(0,0,0,0.06);
+    color: var(--accent);
+  }
+  body.dark .format-btn.active {
+    background: rgba(255,255,255,0.1);
+  }
+  .format-btn.active::after {
+    content: "✓";
+    position: absolute;
+    right: 12px;
+    font-weight: bold;
+    font-style: normal;
+  }
+  
+  .format-divider { height: 1px; background: rgba(0,0,0,0.1); margin: 4px 0; flex-shrink: 0; }
+  body.dark .format-divider { background: rgba(255,255,255,0.1); }
 
   /* Dark theme readability */
-  body.dark textarea { color: #f2f2f2; }
-  body.dark textarea::placeholder { color: rgba(255,255,255,0.4); }
+  body.dark .editor { color: #f2f2f2; }
+  body.dark .editor[placeholder]:empty:before { color: rgba(255,255,255,0.4); }
   body.dark .bar { background: rgba(255,255,255,0.08); }
   body.dark .btn { color: rgba(255,255,255,0.7); }
   body.dark .btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+  .color-palette {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 8px 10px;
+  }
+  .color-swatch {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: transform 0.15s, filter 0.15s;
+    background: none;
+    padding: 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  body.dark .color-swatch { border-color: rgba(255,255,255,0.1); }
+  .color-swatch:hover { transform: scale(1.15); }
+  .color-swatch.active {
+    filter: brightness(0.85);
+  }
+  .color-swatch.active::after {
+    content: "✓";
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  }
 </style>
 </head>
 <body>
@@ -167,15 +275,43 @@
       </div>
       <input type="range" id="opacity" min="30" max="100" title="Opacity" />
       <div class="spacer"></div>
+      <div class="format-control">
+        <button class="btn" id="formatBtn" title="Formatting" style="font-family: Georgia, serif; font-style: italic; width: 24px; text-align: center; padding: 2px 0;">f</button>
+        <div class="format-popover" id="formatPopover">
+          <div class="color-palette">
+            <button class="color-swatch" style="background: #ef4444" data-color="#ef4444" title="Red"></button>
+            <button class="color-swatch" style="background: #f97316" data-color="#f97316" title="Orange"></button>
+            <button class="color-swatch" style="background: #10b981" data-color="#10b981" title="Green"></button>
+            <button class="color-swatch" style="background: #3b82f6" data-color="#3b82f6" title="Blue"></button>
+            <button class="color-swatch" style="background: #8b5cf6" data-color="#8b5cf6" title="Purple"></button>
+            <button class="color-swatch" style="background: #ec4899" data-color="#ec4899" title="Pink"></button>
+          </div>
+          <div class="format-divider"></div>
+          <button class="format-btn" data-cmd="bold"><b>Bold</b></button>
+          <button class="format-btn" data-cmd="italic"><i>Italic</i></button>
+          <button class="format-btn" data-cmd="underline"><u>Underline</u></button>
+          <button class="format-btn" data-cmd="strikeThrough"><s>Strikethrough</s></button>
+          <button class="format-btn" data-cmd="removeFormat"><i>Clear Formatting</i></button>
+          <div class="format-divider"></div>
+          <button class="format-btn" data-cmd="formatBlock" data-val="H1" style="font-size: 1.2em; font-weight: bold;">Title</button>
+          <button class="format-btn" data-cmd="formatBlock" data-val="H2" style="font-size: 1.1em; font-weight: bold;">Heading</button>
+          <button class="format-btn" data-cmd="formatBlock" data-val="H3" style="font-weight: bold;">Subheading</button>
+          <button class="format-btn" data-cmd="formatBlock" data-val="DIV">Normal Text</button>
+          <button class="format-btn" data-cmd="formatBlock" data-val="PRE" style="font-family: monospace;">Monostyled</button>
+          <div class="format-divider"></div>
+          <button class="format-btn" data-cmd="insertUnorderedList">• Bulleted List</button>
+          <button class="format-btn" data-cmd="insertOrderedList">1. Numbered List</button>
+          <button class="format-btn" data-cmd="formatBlock" data-val="BLOCKQUOTE" style="border-left: 2px solid currentColor; padding-left: 4px; margin-left: 4px;">Block Quote</button>
+        </div>
+      </div>
       <button class="btn" id="fontDown" title="Smaller text">A−</button>
       <button class="btn" id="fontUp" title="Larger text">A+</button>
-      <button class="btn" id="mono" title="Monospace: better for code snippets">{}</button>
       <button class="btn" id="pin" title="Pinned: stays on top when you switch apps">📌</button>
       <button class="btn" id="ghost" title="Click-through: see & click behind (⌘⇧G)">👻</button>
       <button class="btn" id="new" title="New note">＋</button>
       <button class="btn" id="close" title="Close note">✕</button>
     </div>
-    <textarea id="text" placeholder="Your private notes… (invisible to screen sharing)" spellcheck="false"></textarea>
+    <div id="text" class="editor" contenteditable="true" placeholder="Your private notes… (invisible to screen sharing)" spellcheck="false"></div>
   </div>
   <script src="note.js"></script>
 </body>
