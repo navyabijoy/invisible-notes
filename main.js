@@ -92,7 +92,12 @@ function createManager() {
       renameNote: (id, title) => renameNote(id, title),
       createNote: () => createNoteNearCursor(),
       toggleHideAll: () => toggleHideAll(),
-      toggleGhostAll: () => toggleGhostAll()
+      toggleGhostAll: () => toggleGhostAll(),
+      setActiveWorkspace: (id) => setActiveWorkspace(id),
+      createWorkspace: (name) => createWorkspace(name),
+      renameWorkspace: (id, name) => renameWorkspace(id, name),
+      removeWorkspace: (id) => removeWorkspace(id),
+      moveNoteToWorkspace: (noteId, workspaceId) => moveNoteToWorkspace(noteId, workspaceId)
     }
   });
 }
@@ -122,19 +127,63 @@ function openNoteWindow(record) {
   return win;
 }
 
-function showNote(id) {
+// ---------- Window vs. record (issue #8) ----------
+//
+// A note is on screen when BOTH are true:
+//
+//     record.visible === true            (the user's own show/hide choice)
+//     record.workspaceId === active      (its workspace is the one selected)
+//
+// The two are deliberately independent. openWindowFor/closeWindowFor touch
+// only the window, so switching workspaces can pull notes off screen and put
+// them back without ever rewriting `visible`. Otherwise, leaving 2 of 5 notes
+// open, switching away and switching back would return all 5, silently
+// destroying the user's per-note choices on every switch.
+//
+// showNote/hideNote are the record-writing pair, used when the user really
+// does mean "show/hide this note" (the X button, the tray, the manager).
+
+function openWindowFor(id) {
   const existing = noteWindows.get(id);
   if (existing && !existing.isDestroyed()) {
     existing.showInactive();
     // Re-apply capture exclusion: some Electron versions on Windows clear the
     // SetWindowDisplayAffinity flag when a window is hidden via win.hide().
     applyContentProtection(existing);
-  } else {
-    const record = store.get(id);
-    if (!record) return;
-    openNoteWindow(record);
+    return existing;
   }
+  const record = store.get(id);
+  if (!record) return null;
+  return openNoteWindow(record);
+}
+
+// Pull a note off screen without touching its record. Intentionally
+// hide() and not close()/destroy(), because the window is reused when its
+// workspace comes back, which keeps the switch instant.
+function closeWindowFor(id) {
+  const win = noteWindows.get(id);
+  if (win && !win.isDestroyed()) win.hide();
+}
+
+// Reconcile every window against the active workspace. Doubles as the
+// startup path: notes that are visible in the active workspace get windows,
+// everything else stays off screen with its `visible` flag intact.
+function applyActiveWorkspace() {
+  const activeId = store.activeWorkspaceId();
+  for (const record of store.all()) {
+    if (record.visible && record.workspaceId === activeId) openWindowFor(record.id);
+    else closeWindowFor(record.id);
+  }
+}
+
+function showNote(id) {
+  const record = store.get(id);
+  if (!record) return;
   store.update(id, { visible: true });
+  // Only notes in the active workspace get a window; a note shown while
+  // another workspace is selected stays marked visible and appears as soon
+  // as its workspace is selected again.
+  if (record.workspaceId === store.activeWorkspaceId()) openWindowFor(id);
   updateTrayMenu();
   manager.notifyChanged();
 }
@@ -143,8 +192,7 @@ function showNote(id) {
 // (and its content) stays in the store untouched. This is intentionally
 // NOT window.close()/destroy() — only Notes Manager delete removes a record.
 function hideNote(id) {
-  const win = noteWindows.get(id);
-  if (win && !win.isDestroyed()) win.hide();
+  closeWindowFor(id);
   store.update(id, { visible: false });
   updateTrayMenu();
   manager.notifyChanged();
@@ -165,6 +213,49 @@ function renameNote(id, title) {
   manager.notifyChanged();
 }
 
+// ---------- Workspaces ----------
+function setActiveWorkspace(id) {
+  if (!store.setActiveWorkspace(id)) return;
+  applyActiveWorkspace();
+  updateTrayMenu();
+  manager.notifyChanged();
+}
+
+// Creating a workspace switches to it, because the user just named the context
+// they want to work in, so landing them somewhere else would be surprising.
+function createWorkspace(name) {
+  const workspace = store.createWorkspace(name);
+  setActiveWorkspace(workspace.id);
+  return workspace;
+}
+
+function renameWorkspace(id, name) {
+  store.renameWorkspace(id, name);
+  updateTrayMenu();
+  manager.notifyChanged();
+}
+
+// Notes in the removed workspace are reassigned, never deleted (see
+// NoteStore.removeWorkspace). Returns the store's result so the caller can
+// tell the user how many notes moved.
+function removeWorkspace(id) {
+  const result = store.removeWorkspace(id);
+  if (!result) return null;
+  applyActiveWorkspace();
+  updateTrayMenu();
+  manager.notifyChanged();
+  return result;
+}
+
+function moveNoteToWorkspace(noteId, workspaceId) {
+  if (!store.moveNote(noteId, workspaceId)) return;
+  // The note may have just moved out of (or into) the active workspace, so
+  // its window has to follow, without disturbing its `visible` flag.
+  applyActiveWorkspace();
+  updateTrayMenu();
+  manager.notifyChanged();
+}
+
 function createNoteNearCursor() {
   const cursor = screen.getCursorScreenPoint();
   const display = screen.getDisplayNearestPoint(cursor);
@@ -180,16 +271,25 @@ function createNoteNearCursor() {
   return record.id;
 }
 
+// Scoped to the active workspace, because "hide all" should never reach into a
+// workspace the user isn't looking at and rewrite its notes' visibility.
 function toggleHideAll() {
-  const anyVisible = store.all().some((n) => n.visible);
-  for (const record of store.all()) {
+  const records = store.notesInWorkspace(store.activeWorkspaceId());
+  const anyVisible = records.some((n) => n.visible);
+  for (const record of records) {
     if (anyVisible) hideNote(record.id);
     else showNote(record.id);
   }
 }
 
+// Also scoped to the active workspace. Windows for other workspaces are
+// hidden rather than destroyed, so an unscoped loop would silently flip
+// click-through on notes the user can't even see.
 function toggleGhostAll() {
-  for (const win of noteWindows.values()) {
+  const activeId = store.activeWorkspaceId();
+  for (const [id, win] of noteWindows) {
+    const record = store.get(id);
+    if (!record || record.workspaceId !== activeId) continue;
     if (!win.isDestroyed()) win.webContents.send('note:toggleGhost');
   }
 }
@@ -208,6 +308,20 @@ function reconcileOpenWindowsToDisplays() {
       store.update(id, { x: safe.x, y: safe.y, displayId: safe.displayId });
     }
   }
+}
+
+// On Windows, SetWindowDisplayAffinity can be silently dropped after sleep,
+// screen lock, or display topology changes. Re-apply to every open note window.
+function reapplyContentProtectionToOpenWindows() {
+  if (!platform.isWindows) return;
+  for (const win of noteWindows.values()) {
+    applyContentProtection(win);
+  }
+}
+
+function reconcileOpenWindowsAfterSystemChange() {
+  reconcileOpenWindowsToDisplays();
+  reapplyContentProtectionToOpenWindows();
 }
 
 // ---------- IPC from renderer ----------
@@ -273,14 +387,27 @@ function noteLabel(record) {
   return snippet || 'Untitled note';
 }
 
-// Stopgap until the full Notes Manager window (step 2) exists: lists every
-// saved record, open or hidden, so a hidden note is never actually stranded.
+// Lists the active workspace's records, open or hidden, so a hidden note is
+// never stranded. Notes in other workspaces are reachable by switching to
+// that workspace from the Workspace submenu.
 function buildNotesSubmenu() {
-  const records = store.all();
-  if (records.length === 0) return [{ label: 'No notes yet', enabled: false }];
+  const records = store.notesInWorkspace(store.activeWorkspaceId());
+  if (records.length === 0) return [{ label: 'No notes in this workspace', enabled: false }];
   return records.map((record) => ({
     label: `${record.visible ? '●' : '○'} ${noteLabel(record)}`,
     click: () => (record.visible ? hideNote(record.id) : showNote(record.id))
+  }));
+}
+
+// Radio items so the active workspace is unambiguous at a glance; the note
+// count makes it obvious where notes went after a switch.
+function buildWorkspaceSubmenu() {
+  const activeId = store.activeWorkspaceId();
+  return store.workspaces().map((workspace) => ({
+    label: `${workspace.name} (${store.notesInWorkspace(workspace.id).length})`,
+    type: 'radio',
+    checked: workspace.id === activeId,
+    click: () => setActiveWorkspace(workspace.id)
   }));
 }
 
@@ -291,9 +418,13 @@ function updateTrayMenu() {
   // out again here, so the tray can never advertise a binding the app has
   // stopped answering to.
   const accelerator = Object.fromEntries(getShortcuts().map((s) => [s.id, s.accelerator]));
+  const activeWorkspace = store.getWorkspace(store.activeWorkspaceId());
   const menu = Menu.buildFromTemplate([
     { label: 'New Note', accelerator: accelerator.newNote, click: () => createNoteNearCursor() },
     { label: 'Notes Manager…', accelerator: accelerator.openManager, click: () => manager.openManagerWindow() },
+    { type: 'separator' },
+    { label: `Workspace: ${activeWorkspace ? activeWorkspace.name : '(none)'}`, enabled: false },
+    { label: 'Switch Workspace', submenu: buildWorkspaceSubmenu() },
     { label: 'Notes', submenu: buildNotesSubmenu() },
     { label: 'Hide/Show All', accelerator: accelerator.toggleHideAll, click: () => toggleHideAll() },
     { label: 'Toggle Click-Through (all)', accelerator: accelerator.toggleGhostAll, click: () => toggleGhostAll() },
@@ -353,23 +484,29 @@ if (!gotLock) {
     setupTray();
     registerFallbackShortcut(globalShortcut, () => createNoteNearCursor());
 
-    const records = store.all();
-    if (records.length === 0) {
+    if (store.all().length === 0) {
       createNoteNearCursor();
     } else {
-      for (const record of records) {
-        if (record.visible) openNoteWindow(record);
-      }
+      // Restores exactly the notes that are visible AND in the active
+      // workspace, which is the same rule that governs a workspace switch.
+      applyActiveWorkspace();
     }
 
-    screen.on('display-added', reconcileOpenWindowsToDisplays);
-    screen.on('display-removed', reconcileOpenWindowsToDisplays);
-    screen.on('display-metrics-changed', reconcileOpenWindowsToDisplays);
+    registerShortcuts({
+      newNote: () => createNoteNearCursor(),
+      toggleHideAll: () => toggleHideAll(),
+      toggleGhostAll: () => toggleGhostAll(),
+      openManager: () => manager.openManagerWindow()
+    });
+
+    screen.on('display-added', reconcileOpenWindowsAfterSystemChange);
+    screen.on('display-removed', reconcileOpenWindowsAfterSystemChange);
+    screen.on('display-metrics-changed', reconcileOpenWindowsAfterSystemChange);
 
     // Waking from sleep can silently change the connected-display set before
     // the OS fires its own display events — re-check note positions either way.
-    powerMonitor.on('resume', reconcileOpenWindowsToDisplays);
-    powerMonitor.on('unlock-screen', reconcileOpenWindowsToDisplays);
+    powerMonitor.on('resume', reconcileOpenWindowsAfterSystemChange);
+    powerMonitor.on('unlock-screen', reconcileOpenWindowsAfterSystemChange);
   });
 
   app.on('before-quit', () => {
