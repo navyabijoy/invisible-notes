@@ -20,8 +20,19 @@ function applyContentProtection(win) {
   win.setContentProtection(true);
 }
 
+const MIN_WIDTH = 280;
+const MIN_HEIGHT = 120;
+
 function createNoteWindow(record, { onMoved, onResized, onClosed } = {}) {
-  const bounds = clampToVisibleDisplay(record);
+  // Notes saved before minWidth/minHeight were raised can still have a
+  // smaller width/height on disk. Clamp to the enforced minimums before
+  // computing placement so clampToVisibleDisplay positions the note for
+  // the size it will actually render at, not the stale saved size.
+  const bounds = clampToVisibleDisplay({
+    ...record,
+    width: Math.max(record.width || 0, MIN_WIDTH),
+    height: Math.max(record.height || 0, MIN_HEIGHT)
+  });
 
   const win = new BrowserWindow({
     width: bounds.width,
@@ -34,8 +45,8 @@ function createNoteWindow(record, { onMoved, onResized, onClosed } = {}) {
     hasShadow: false,
     skipTaskbar: true,
     // Keep the hover toolbar fully visible (issue #24). 160px clipped New/Close.
-    minWidth: 280,
-    minHeight: 120,
+    minWidth: MIN_WIDTH,
+    minHeight: MIN_HEIGHT,
     backgroundColor: '#00000000',
     show: false,
     webPreferences: {
