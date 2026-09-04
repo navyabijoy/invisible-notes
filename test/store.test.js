@@ -328,7 +328,7 @@ test('normalizeImport coerces malformed numeric fields to sane values', () => {
   });
   assert.equal(records.length, 1);
   const r = records[0];
-  assert.equal(r.width, 300);
+  assert.equal(r.width, 360);
   assert.equal(r.height, 220);
   assert.equal(r.opacity, 0.85);
   assert.equal(r.fontSize, 15);

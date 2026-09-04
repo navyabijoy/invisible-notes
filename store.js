@@ -236,8 +236,8 @@ function normalizeImport(data) {
     // bounds so a bad backup can't produce an unusable window.
     if (!Number.isFinite(record.opacity) || record.opacity <= 0 || record.opacity > 1) record.opacity = 0.85;
     if (!Number.isFinite(record.fontSize)) record.fontSize = 15;
-    if (!Number.isFinite(record.width) || record.width < 160) record.width = 300;
-    if (!Number.isFinite(record.height) || record.height < 120) record.height = 220;
+    if (!Number.isFinite(record.width) || record.width < 280) record.width = DEFAULT_NOTE_WIDTH;
+    if (!Number.isFinite(record.height) || record.height < 120) record.height = DEFAULT_NOTE_HEIGHT;
     if (!Number.isFinite(record.x)) record.x = undefined;
     if (!Number.isFinite(record.y)) record.y = undefined;
     if (!Number.isFinite(record.createdAt)) record.createdAt = Date.now();
