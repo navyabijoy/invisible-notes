@@ -263,8 +263,10 @@ function createNoteNearCursor() {
   const wa = display.workArea;
   // Cascade a little so stacked notes don't perfectly overlap.
   const offset = (noteWindows.size % 6) * 26;
-  const x = Math.min(cursor.x, wa.x + wa.width - (DEFAULT_NOTE_WIDTH + 20)) + offset;
-  const y = Math.min(cursor.y, wa.y + wa.height - (DEFAULT_NOTE_HEIGHT + 20)) + offset;
+  // Apply the cascade, then clamp, so stacked notes cannot sit past the
+  // work-area edge now that new notes are 360px wide.
+  const x = Math.min(cursor.x + offset, wa.x + wa.width - DEFAULT_NOTE_WIDTH);
+  const y = Math.min(cursor.y + offset, wa.y + wa.height - DEFAULT_NOTE_HEIGHT);
   const record = store.create({ x, y, displayId: display.id });
   openNoteWindow(record);
   updateTrayMenu();
