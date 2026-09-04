@@ -328,14 +328,25 @@ test('normalizeImport coerces malformed numeric fields to sane values', () => {
   });
   assert.equal(records.length, 1);
   const r = records[0];
+  // NaN is unusable, so width falls back to the default; height 5 is a real
+  // number, so it is only raised to the minimum.
   assert.equal(r.width, 360);
-  assert.equal(r.height, 220);
+  assert.equal(r.height, 120);
   assert.equal(r.opacity, 0.85);
   assert.equal(r.fontSize, 15);
   assert.equal(r.x, undefined);
   assert.equal(r.y, undefined);
   assert.equal(typeof r.createdAt, 'number');
   assert.equal(r.updatedAt, r.createdAt);
+});
+
+test('normalizeImport raises an undersized note to the minimum, not the default', () => {
+  const records = normalizeImport({
+    version: STORE_VERSION,
+    notes: [{ id: 'a', width: 200, height: 150 }]
+  });
+  assert.equal(records[0].width, 280);
+  assert.equal(records[0].height, 150);
 });
 
 test('normalizeImport drops duplicate and malformed entries', () => {

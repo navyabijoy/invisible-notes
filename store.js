@@ -12,6 +12,12 @@ const STORE_VERSION = 6;
 const DEFAULT_NOTE_WIDTH = 360;
 const DEFAULT_NOTE_HEIGHT = 220;
 
+// Smallest a note window may be. Enforced as BrowserWindow minWidth/minHeight
+// in noteWindow.js and used to clamp sizes coming from disk or an import, so
+// the two can't drift apart.
+const MIN_NOTE_WIDTH = 280;
+const MIN_NOTE_HEIGHT = 120;
+
 // The workspace every migrated note lands in. The id is fixed so migrations
 // have a stable target and so the "where do orphaned notes go" fallback has
 // something to prefer.
@@ -236,8 +242,13 @@ function normalizeImport(data) {
     // bounds so a bad backup can't produce an unusable window.
     if (!Number.isFinite(record.opacity) || record.opacity <= 0 || record.opacity > 1) record.opacity = 0.85;
     if (!Number.isFinite(record.fontSize)) record.fontSize = 15;
-    if (!Number.isFinite(record.width) || record.width < 280) record.width = DEFAULT_NOTE_WIDTH;
-    if (!Number.isFinite(record.height) || record.height < 120) record.height = DEFAULT_NOTE_HEIGHT;
+    // A missing/garbage size falls back to the default; a real but undersized
+    // one (e.g. from a backup made when the minimum was 160) is only raised to
+    // the minimum, so imported notes keep the size the user chose.
+    if (!Number.isFinite(record.width)) record.width = DEFAULT_NOTE_WIDTH;
+    else if (record.width < MIN_NOTE_WIDTH) record.width = MIN_NOTE_WIDTH;
+    if (!Number.isFinite(record.height)) record.height = DEFAULT_NOTE_HEIGHT;
+    else if (record.height < MIN_NOTE_HEIGHT) record.height = MIN_NOTE_HEIGHT;
     if (!Number.isFinite(record.x)) record.x = undefined;
     if (!Number.isFinite(record.y)) record.y = undefined;
     if (!Number.isFinite(record.createdAt)) record.createdAt = Date.now();
@@ -519,6 +530,8 @@ module.exports = {
   STORE_VERSION,
   DEFAULT_NOTE_WIDTH,
   DEFAULT_NOTE_HEIGHT,
+  MIN_NOTE_WIDTH,
+  MIN_NOTE_HEIGHT,
   DEFAULT_WORKSPACE_ID,
   sanitizeWorkspaceName
 };
