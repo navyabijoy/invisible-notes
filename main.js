@@ -11,7 +11,8 @@ const {
   globalShortcut
 } = require('electron');
 const path = require('path');
-const { NoteStore, DEFAULT_NOTE_WIDTH, DEFAULT_NOTE_HEIGHT } = require('./store');
+const { NoteStore } = require('./store');
+const { DEFAULT_NOTE_WIDTH, DEFAULT_NOTE_HEIGHT } = require('./noteSize');
 const platform = require('./platform');
 const { createNoteWindow, applyContentProtection } = require('./noteWindow');
 const { clampToVisibleDisplay, displayIdForPoint } = require('./displayUtils');

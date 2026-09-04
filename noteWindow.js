@@ -6,7 +6,7 @@ const path = require('path');
 const { BrowserWindow } = require('electron');
 const platform = require('./platform');
 const { clampToVisibleDisplay } = require('./displayUtils');
-const { MIN_NOTE_WIDTH, MIN_NOTE_HEIGHT } = require('./store');
+const { MIN_NOTE_WIDTH, MIN_NOTE_HEIGHT } = require('./noteSize');
 
 // Apply (or re-apply) screen-capture exclusion on a window.
 // On Windows, some Electron versions clear the SetWindowDisplayAffinity flag

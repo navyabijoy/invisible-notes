@@ -2,7 +2,7 @@
 // monitor is disconnected, or the saved position lands outside any
 // currently connected display's work area.
 const { screen } = require('electron');
-const { DEFAULT_NOTE_WIDTH, DEFAULT_NOTE_HEIGHT } = require('./store');
+const { DEFAULT_NOTE_WIDTH, DEFAULT_NOTE_HEIGHT } = require('./noteSize');
 
 function rectsIntersect(a, b) {
   return a.x < b.x + b.width && a.x + a.width > b.x &&

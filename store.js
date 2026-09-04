@@ -6,17 +6,12 @@ const path = require('path');
 
 const STORE_VERSION = 6;
 
-// Default note size. The hover toolbar is compacted to fit inside 300px
-// (issue #24) so existing notes stay usable; new notes get a little extra
-// width so New/Close aren't flush against the edge.
-const DEFAULT_NOTE_WIDTH = 360;
-const DEFAULT_NOTE_HEIGHT = 220;
-
-// Smallest a note window may be. Enforced as BrowserWindow minWidth/minHeight
-// in noteWindow.js and used to clamp sizes coming from disk or an import, so
-// the two can't drift apart.
-const MIN_NOTE_WIDTH = 280;
-const MIN_NOTE_HEIGHT = 120;
+const {
+  DEFAULT_NOTE_WIDTH,
+  DEFAULT_NOTE_HEIGHT,
+  MIN_NOTE_WIDTH,
+  MIN_NOTE_HEIGHT
+} = require('./noteSize');
 
 // The workspace every migrated note lands in. The id is fixed so migrations
 // have a stable target and so the "where do orphaned notes go" fallback has
@@ -528,10 +523,6 @@ module.exports = {
   defaultRecord,
   normalizeImport,
   STORE_VERSION,
-  DEFAULT_NOTE_WIDTH,
-  DEFAULT_NOTE_HEIGHT,
-  MIN_NOTE_WIDTH,
-  MIN_NOTE_HEIGHT,
   DEFAULT_WORKSPACE_ID,
   sanitizeWorkspaceName
 };
