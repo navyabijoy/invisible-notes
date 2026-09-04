@@ -6,6 +6,12 @@ const path = require('path');
 
 const STORE_VERSION = 6;
 
+// Default note size. The hover toolbar is compacted to fit inside 300px
+// (issue #24) so existing notes stay usable; new notes get a little extra
+// width so New/Close aren't flush against the edge.
+const DEFAULT_NOTE_WIDTH = 360;
+const DEFAULT_NOTE_HEIGHT = 220;
+
 // The workspace every migrated note lands in. The id is fixed so migrations
 // have a stable target and so the "where do orphaned notes go" fallback has
 // something to prefer.
@@ -56,8 +62,8 @@ function defaultRecord(overrides = {}) {
     color: overrides.color || 'yellow',
     x: overrides.x,
     y: overrides.y,
-    width: overrides.width || 300,
-    height: overrides.height || 220,
+    width: overrides.width || DEFAULT_NOTE_WIDTH,
+    height: overrides.height || DEFAULT_NOTE_HEIGHT,
     displayId: overrides.displayId ?? null,
     opacity: typeof overrides.opacity === 'number' ? overrides.opacity : 0.85,
     fontSize: overrides.fontSize || 15,
@@ -511,6 +517,8 @@ module.exports = {
   defaultRecord,
   normalizeImport,
   STORE_VERSION,
+  DEFAULT_NOTE_WIDTH,
+  DEFAULT_NOTE_HEIGHT,
   DEFAULT_WORKSPACE_ID,
   sanitizeWorkspaceName
 };

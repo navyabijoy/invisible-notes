@@ -11,7 +11,7 @@ const {
   globalShortcut
 } = require('electron');
 const path = require('path');
-const { NoteStore } = require('./store');
+const { NoteStore, DEFAULT_NOTE_WIDTH, DEFAULT_NOTE_HEIGHT } = require('./store');
 const platform = require('./platform');
 const { createNoteWindow, applyContentProtection } = require('./noteWindow');
 const { clampToVisibleDisplay, displayIdForPoint } = require('./displayUtils');
@@ -263,8 +263,8 @@ function createNoteNearCursor() {
   const wa = display.workArea;
   // Cascade a little so stacked notes don't perfectly overlap.
   const offset = (noteWindows.size % 6) * 26;
-  const x = Math.min(cursor.x, wa.x + wa.width - 320) + offset;
-  const y = Math.min(cursor.y, wa.y + wa.height - 240) + offset;
+  const x = Math.min(cursor.x, wa.x + wa.width - (DEFAULT_NOTE_WIDTH + 20)) + offset;
+  const y = Math.min(cursor.y, wa.y + wa.height - (DEFAULT_NOTE_HEIGHT + 20)) + offset;
   const record = store.create({ x, y, displayId: display.id });
   openNoteWindow(record);
   updateTrayMenu();

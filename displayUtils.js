@@ -2,6 +2,7 @@
 // monitor is disconnected, or the saved position lands outside any
 // currently connected display's work area.
 const { screen } = require('electron');
+const { DEFAULT_NOTE_WIDTH, DEFAULT_NOTE_HEIGHT } = require('./store');
 
 function rectsIntersect(a, b) {
   return a.x < b.x + b.width && a.x + a.width > b.x &&
@@ -11,8 +12,8 @@ function rectsIntersect(a, b) {
 // Returns { x, y, width, height, displayId } guaranteed to be at least
 // partially on-screen on some connected display.
 function clampToVisibleDisplay({ x, y, width, height }) {
-  const w = width || 300;
-  const h = height || 220;
+  const w = width || DEFAULT_NOTE_WIDTH;
+  const h = height || DEFAULT_NOTE_HEIGHT;
   const displays = screen.getAllDisplays();
 
   if (typeof x === 'number' && typeof y === 'number') {
