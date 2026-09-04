@@ -328,10 +328,27 @@ test('normalizeImport coerces malformed numeric fields to sane values', () => {
   });
   assert.equal(records.length, 1);
   const r = records[0];
+test('normalizeImport coerces malformed numeric fields to sane values', () => {
+  const { DEFAULT_NOTE_WIDTH, MIN_NOTE_HEIGHT } = require('../noteSize');
+  const records = normalizeImport({
+    version: STORE_VERSION,
+    notes: [{
+      id: 'a',
+      width: NaN,
+      height: 5,
+      opacity: 2,
+      fontSize: 'large',
+      x: Infinity,
+      y: 'nope',
+      createdAt: 'today'
+    }]
+  });
+  assert.equal(records.length, 1);
+  const r = records[0];
   // NaN is unusable, so width falls back to the default; height 5 is a real
   // number, so it is only raised to the minimum.
-  assert.equal(r.width, 360);
-  assert.equal(r.height, 120);
+  assert.equal(r.width, DEFAULT_NOTE_WIDTH);
+  assert.equal(r.height, MIN_NOTE_HEIGHT);
   assert.equal(r.opacity, 0.85);
   assert.equal(r.fontSize, 15);
   assert.equal(r.x, undefined);
