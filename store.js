@@ -237,9 +237,9 @@ function normalizeImport(data) {
     // bounds so a bad backup can't produce an unusable window.
     if (!Number.isFinite(record.opacity) || record.opacity <= 0 || record.opacity > 1) record.opacity = 0.85;
     if (!Number.isFinite(record.fontSize)) record.fontSize = 15;
-    // A missing/garbage size falls back to the default; a real but undersized
-    // one (e.g. from a backup made when the minimum was 160) is only raised to
-    // the minimum, so imported notes keep the size the user chose.
+    // A missing or unusable size falls back to the default; a real but
+    // undersized one (a backup written when the minimum was lower) is only
+    // raised to the minimum, so imported notes keep the size the user chose.
     if (!Number.isFinite(record.width)) record.width = DEFAULT_NOTE_WIDTH;
     else if (record.width < MIN_NOTE_WIDTH) record.width = MIN_NOTE_WIDTH;
     if (!Number.isFinite(record.height)) record.height = DEFAULT_NOTE_HEIGHT;

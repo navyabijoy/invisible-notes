@@ -7,8 +7,8 @@ const DEFAULT_NOTE_WIDTH = 360;
 const DEFAULT_NOTE_HEIGHT = 220;
 
 // Smallest a note window may be. Enforced as BrowserWindow minWidth/minHeight
-// and used to raise undersized sizes coming from disk or an import, so the
-// hover toolbar always has room for every control (issue #24).
+// and used to raise undersized sizes coming from disk or an import. The floor
+// is set by the hover toolbar: below it, the trailing controls get clipped.
 const MIN_NOTE_WIDTH = 280;
 const MIN_NOTE_HEIGHT = 120;
 

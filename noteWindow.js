@@ -42,7 +42,7 @@ function createNoteWindow(record, { onMoved, onResized, onClosed } = {}) {
     resizable: true,
     hasShadow: false,
     skipTaskbar: true,
-    // Keep the hover toolbar fully visible (issue #24). 160px clipped New/Close.
+    // Floor the window at the size the hover toolbar needs to render in full.
     minWidth: MIN_NOTE_WIDTH,
     minHeight: MIN_NOTE_HEIGHT,
     backgroundColor: '#00000000',

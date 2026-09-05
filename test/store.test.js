@@ -5,6 +5,11 @@ const os = require('node:os');
 const path = require('node:path');
 
 const { NoteStore, normalizeImport, STORE_VERSION, DEFAULT_WORKSPACE_ID } = require('../store');
+const {
+  DEFAULT_NOTE_WIDTH,
+  MIN_NOTE_WIDTH,
+  MIN_NOTE_HEIGHT
+} = require('../noteSize');
 
 const tempDirs = [];
 const stores = [];
@@ -328,23 +333,6 @@ test('normalizeImport coerces malformed numeric fields to sane values', () => {
   });
   assert.equal(records.length, 1);
   const r = records[0];
-test('normalizeImport coerces malformed numeric fields to sane values', () => {
-  const { DEFAULT_NOTE_WIDTH, MIN_NOTE_HEIGHT } = require('../noteSize');
-  const records = normalizeImport({
-    version: STORE_VERSION,
-    notes: [{
-      id: 'a',
-      width: NaN,
-      height: 5,
-      opacity: 2,
-      fontSize: 'large',
-      x: Infinity,
-      y: 'nope',
-      createdAt: 'today'
-    }]
-  });
-  assert.equal(records.length, 1);
-  const r = records[0];
   // NaN is unusable, so width falls back to the default; height 5 is a real
   // number, so it is only raised to the minimum.
   assert.equal(r.width, DEFAULT_NOTE_WIDTH);
@@ -360,10 +348,10 @@ test('normalizeImport coerces malformed numeric fields to sane values', () => {
 test('normalizeImport raises an undersized note to the minimum, not the default', () => {
   const records = normalizeImport({
     version: STORE_VERSION,
-    notes: [{ id: 'a', width: 200, height: 150 }]
+    notes: [{ id: 'a', width: MIN_NOTE_WIDTH - 80, height: MIN_NOTE_HEIGHT + 30 }]
   });
-  assert.equal(records[0].width, 280);
-  assert.equal(records[0].height, 150);
+  assert.equal(records[0].width, MIN_NOTE_WIDTH);
+  assert.equal(records[0].height, MIN_NOTE_HEIGHT + 30);
 });
 
 test('normalizeImport drops duplicate and malformed entries', () => {

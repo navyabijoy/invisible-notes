@@ -36,10 +36,10 @@
   }
 
   /* Drag handle / toolbar.
-     Compact metrics so every control (including New/Close) fits inside
-     legacy 300px notes and the 280px window minimum (issue #24). New notes
-     default to 360px. Buttons do not shrink; the spacer and opacity slider
-     give way first. */
+     Metrics are kept tight so the full set of controls still fits at the
+     narrowest window width the app allows, and at the smaller widths older
+     notes may have been saved at. Buttons never shrink; the spacer and the
+     opacity slider absorb the loss first. */
   .bar {
     height: 30px;
     flex: 0 0 30px;
