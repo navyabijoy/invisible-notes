@@ -12,6 +12,7 @@ const {
 } = require('electron');
 const path = require('path');
 const { NoteStore } = require('./store');
+const { DEFAULT_NOTE_WIDTH, DEFAULT_NOTE_HEIGHT } = require('./noteSize');
 const platform = require('./platform');
 const { createNoteWindow, applyContentProtection } = require('./noteWindow');
 const { clampToVisibleDisplay, displayIdForPoint } = require('./displayUtils');
@@ -263,8 +264,12 @@ function createNoteNearCursor() {
   const wa = display.workArea;
   // Cascade a little so stacked notes don't perfectly overlap.
   const offset = (noteWindows.size % 6) * 26;
-  const x = Math.min(cursor.x, wa.x + wa.width - 320) + offset;
-  const y = Math.min(cursor.y, wa.y + wa.height - 240) + offset;
+  // Clamp after applying the cascade, so a stacked note cannot be pushed past
+  // the work-area edge. The Math.max keeps the origin inside the work area on
+  // displays too small to fit a whole note, where the right/bottom limit would
+  // otherwise land left of / above the work area itself.
+  const x = Math.max(wa.x, Math.min(cursor.x + offset, wa.x + wa.width - DEFAULT_NOTE_WIDTH));
+  const y = Math.max(wa.y, Math.min(cursor.y + offset, wa.y + wa.height - DEFAULT_NOTE_HEIGHT));
   const record = store.create({ x, y, displayId: display.id });
   openNoteWindow(record);
   updateTrayMenu();

@@ -6,6 +6,13 @@ const path = require('path');
 
 const STORE_VERSION = 6;
 
+const {
+  DEFAULT_NOTE_WIDTH,
+  DEFAULT_NOTE_HEIGHT,
+  MIN_NOTE_WIDTH,
+  MIN_NOTE_HEIGHT
+} = require('./noteSize');
+
 // The workspace every migrated note lands in. The id is fixed so migrations
 // have a stable target and so the "where do orphaned notes go" fallback has
 // something to prefer.
@@ -56,8 +63,8 @@ function defaultRecord(overrides = {}) {
     color: overrides.color || 'yellow',
     x: overrides.x,
     y: overrides.y,
-    width: overrides.width || 300,
-    height: overrides.height || 220,
+    width: overrides.width || DEFAULT_NOTE_WIDTH,
+    height: overrides.height || DEFAULT_NOTE_HEIGHT,
     displayId: overrides.displayId ?? null,
     opacity: typeof overrides.opacity === 'number' ? overrides.opacity : 0.85,
     fontSize: overrides.fontSize || 15,
@@ -230,8 +237,13 @@ function normalizeImport(data) {
     // bounds so a bad backup can't produce an unusable window.
     if (!Number.isFinite(record.opacity) || record.opacity <= 0 || record.opacity > 1) record.opacity = 0.85;
     if (!Number.isFinite(record.fontSize)) record.fontSize = 15;
-    if (!Number.isFinite(record.width) || record.width < 160) record.width = 300;
-    if (!Number.isFinite(record.height) || record.height < 120) record.height = 220;
+    // A missing or unusable size falls back to the default; a real but
+    // undersized one (a backup written when the minimum was lower) is only
+    // raised to the minimum, so imported notes keep the size the user chose.
+    if (!Number.isFinite(record.width)) record.width = DEFAULT_NOTE_WIDTH;
+    else if (record.width < MIN_NOTE_WIDTH) record.width = MIN_NOTE_WIDTH;
+    if (!Number.isFinite(record.height)) record.height = DEFAULT_NOTE_HEIGHT;
+    else if (record.height < MIN_NOTE_HEIGHT) record.height = MIN_NOTE_HEIGHT;
     if (!Number.isFinite(record.x)) record.x = undefined;
     if (!Number.isFinite(record.y)) record.y = undefined;
     if (!Number.isFinite(record.createdAt)) record.createdAt = Date.now();

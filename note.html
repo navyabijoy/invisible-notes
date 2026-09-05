@@ -35,14 +35,19 @@
     box-shadow: 0 6px 22px rgba(0, 0, 0, 0.18);
   }
 
-  /* Drag handle / toolbar */
+  /* Drag handle / toolbar.
+     Metrics are kept tight so the full set of controls still fits at the
+     narrowest window width the app allows, and at the smaller widths older
+     notes may have been saved at. Buttons never shrink; the spacer and the
+     opacity slider absorb the loss first. */
   .bar {
     height: 30px;
     flex: 0 0 30px;
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 0 8px;
+    gap: 3px;
+    padding: 0 6px;
+    min-width: 0;
     -webkit-app-region: drag;
     background: rgba(0, 0, 0, 0.06);
     opacity: 0;
@@ -69,7 +74,7 @@
   #mono.active { opacity: 1; background: rgba(0,0,0,0.12); }
   body.dark #mono.active { background: rgba(255,255,255,0.18); }
 
-  .color-control { position: relative; -webkit-app-region: no-drag; }
+  .color-control { position: relative; flex: 0 0 auto; -webkit-app-region: no-drag; }
   .color-dot {
     display: block;
     width: 14px; height: 14px; border-radius: 50%;
@@ -106,7 +111,7 @@
   }
   .swatch.active { box-shadow: 0 0 0 2px rgba(0,0,0,0.4); }
 
-  .spacer { flex: 1; }
+  .spacer { flex: 1 1 0; min-width: 0; }
 
   .btn {
     -webkit-app-region: no-drag;
@@ -116,14 +121,17 @@
     color: rgba(0,0,0,0.55);
     font-size: 15px;
     line-height: 1;
-    padding: 2px 5px;
+    padding: 2px 3px;
     border-radius: 5px;
+    flex: 0 0 auto;
   }
   .btn:hover { background: rgba(0,0,0,0.12); color: rgba(0,0,0,0.8); }
 
   input[type=range] {
     -webkit-app-region: no-drag;
-    width: 58px;
+    width: 42px;
+    min-width: 32px;
+    flex: 0 1 42px;
     accent-color: rgba(0,0,0,0.5);
     cursor: pointer;
   }
