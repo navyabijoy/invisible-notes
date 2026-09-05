@@ -5,6 +5,7 @@ const {
   Tray,
   Menu,
   nativeImage,
+  nativeTheme,
   dialog,
   powerMonitor,
   safeStorage,
@@ -82,9 +83,40 @@ let tray = null;
 // createManagerModule registers IPC handlers that only act once a renderer
 // sends a message, so it can be created lazily after app is ready alongside
 // `store` (which createManagerModule closes over). See createStore() above.
+// ---------- Appearance (Manager-only theme) ----------
+// Single owner for the OS theme source. Renderers never touch nativeTheme
+// directly; they receive the resolved `effectiveDark` via manager snapshot.
+function applyThemeToOS() {
+  if (!store) return;
+  const mode = store.getTheme();
+  nativeTheme.themeSource = mode === 'system' ? 'system' : mode;
+}
+
+function resolveEffectiveDark() {
+  return nativeTheme.shouldUseDarkColors;
+}
+
+function setThemeMode(mode) {
+  if (!store || !manager) return null;
+  const clean = store.setTheme(mode);
+  applyThemeToOS();
+  manager.notifyChanged();
+  return clean;
+}
+
+function setAccentId(id) {
+  if (!store || !manager) return null;
+  const clean = store.setAccent(id);
+  manager.notifyChanged();
+  return clean;
+}
+
 function createManager() {
   return createManagerModule({
     store,
+    theme: {
+      effectiveDark: () => resolveEffectiveDark(),
+    },
     actions: {
       showNote: (id) => showNote(id),
       hideNote: (id) => hideNote(id),
@@ -98,7 +130,9 @@ function createManager() {
       renameWorkspace: (id, name) => renameWorkspace(id, name),
       removeWorkspace: (id) => removeWorkspace(id),
       moveNoteToWorkspace: (noteId, workspaceId) => moveNoteToWorkspace(noteId, workspaceId),
-      importNotes: (records, mode) => importNotes(records, mode)
+      importNotes: (records, mode) => importNotes(records, mode),
+      setTheme: (mode) => setThemeMode(mode),
+      setAccent: (id) => setAccentId(id)
     }
   });
 }
@@ -537,6 +571,10 @@ if (!gotLock) {
     // up the manager that depends on it.
     store = createStore();
     manager = createManager();
+    applyThemeToOS();
+    nativeTheme.on('updated', () => {
+      if (manager) manager.notifyChanged();
+    });
 
     setupTray();
     registerFallbackShortcut(globalShortcut, () => createNoteNearCursor());

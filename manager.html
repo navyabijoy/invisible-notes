@@ -22,6 +22,25 @@
     --sh:          0 1px 2px rgba(0,0,0,0.04), 0 1px 1px rgba(0,0,0,0.03);
     --sh-hover:    0 6px 18px rgba(20,20,30,0.08), 0 1px 3px rgba(20,20,30,0.05);
   }
+  /* Dark theme: applied via documentElement.dataset.theme === 'dark'.
+     Light is the default :root above. System mode resolves to one of the
+     two in the main process (nativeTheme) and arrives as effectiveDark. */
+  [data-theme="dark"] {
+    --accent-lt:   #2b2666;
+    --ink:         #f2f2f5;
+    --ink-2:       #e4e4ea;
+    --muted:       #a1a1b3;
+    --muted-2:     #6e6e82;
+    --border:      #2e2e3a;
+    --border-2:    #3f3f52;
+    --bg:          #141419;
+    --surface:     #1d1d26;
+    --surface-2:   #262633;
+    --sh:          0 1px 2px rgba(0,0,0,0.4);
+    --sh-hover:    0 6px 18px rgba(0,0,0,0.5);
+  }
+  [data-theme="dark"] .toolbar { background: rgba(29,29,38,0.92); }
+  [data-theme="dark"] .icon-btn.danger:hover { background: #4a2226; color: #ff8f88; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   .sr-only {
     position: absolute;
@@ -491,6 +510,53 @@
     text-overflow: ellipsis;
   }
   #version { white-space: nowrap; }
+
+  /* ─── Appearance bar ─────────────────────────────────── */
+  .appearance {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .appearance .seg {
+    display: inline-flex;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .appearance .seg button {
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+  .appearance .seg button[aria-pressed="true"] {
+    background: var(--accent-lt);
+    color: var(--accent-dk);
+  }
+  [data-theme="dark"] .appearance .seg button[aria-pressed="true"] { color: #cfc8ff; }
+  .appearance .accents { display: inline-flex; gap: 6px; margin-left: auto; }
+  .appearance .accent-dot {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    padding: 0;
+  }
+  .appearance .accent-dot[aria-pressed="true"] { border-color: var(--ink); }
+  .appearance .accent-dot:focus-visible,
+  .appearance .seg button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
 </style>
 </head>
 <body>
@@ -537,6 +603,15 @@
     <button class="btn-icon" id="importNotes" title="Import Notes" aria-label="Import notes from a backup file">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
     </button>
+  </div>
+  <div class="appearance" id="appearance" role="region" aria-label="Appearance">
+    <span>Theme</span>
+    <div class="seg" role="group" aria-label="Theme mode">
+      <button type="button" data-theme-opt="light" aria-pressed="false">Light</button>
+      <button type="button" data-theme-opt="dark" aria-pressed="false">Dark</button>
+      <button type="button" data-theme-opt="system" aria-pressed="false">System</button>
+    </div>
+    <div class="accents" id="accents" role="group" aria-label="Accent color"></div>
   </div>
   <div class="list" id="list"></div>
   <div id="footer"><span id="status"></span><span id="version"></span></div>

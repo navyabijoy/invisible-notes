@@ -15,17 +15,21 @@ function sanitizeTitle(input) {
   return input.replace(/[\r\n]+/g, ' ').trim().slice(0, MAX_TITLE_LENGTH);
 }
 
-function createManagerModule({ store, actions }) {
+function createManagerModule({ store, actions, theme }) {
   let win = null;
 
   // One payload for both the initial load and every update, so the renderer
   // always sees notes and workspaces from the same consistent snapshot. A
   // note can never render against a workspace list that doesn't contain it.
+  // Theme/accent ride along so Manager never paints notes with a stale theme.
   function snapshot() {
     return {
       notes: store.all(),
       workspaces: store.workspaces(),
-      activeWorkspace: store.activeWorkspaceId()
+      activeWorkspace: store.activeWorkspaceId(),
+      theme: store.getTheme(),
+      accent: store.getAccent(),
+      effectiveDark: theme ? theme.effectiveDark() : false
     };
   }
 
@@ -105,6 +109,17 @@ function createManagerModule({ store, actions }) {
   ipcMain.on('manager:moveNote', (e, payload) => {
     if (!payload || typeof payload.id !== 'string' || typeof payload.workspaceId !== 'string') return;
     actions.moveNoteToWorkspace(payload.id, payload.workspaceId);
+  });
+
+  // ---------- Appearance (Manager-only theme + accent) ----------
+  ipcMain.on('manager:setTheme', (e, mode) => {
+    if (typeof mode !== 'string') return;
+    if (actions.setTheme) actions.setTheme(mode);
+  });
+
+  ipcMain.on('manager:setAccent', (e, id) => {
+    if (typeof id !== 'string') return;
+    if (actions.setAccent) actions.setAccent(id);
   });
 
   // Deleting a workspace never deletes notes, it reassigns them. The

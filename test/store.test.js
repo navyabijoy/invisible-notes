@@ -94,6 +94,44 @@ test('keeps settings keys it does not know about', () => {
   assert.equal(store.activeWorkspaceId(), DEFAULT_WORKSPACE_ID);
 });
 
+test('fresh install defaults to system theme and violet accent', () => {
+  const store = freshStore();
+  assert.equal(store.getTheme(), 'system');
+  assert.equal(store.getAccent(), 'violet');
+});
+
+test('sanitizes invalid theme and accent values on load', () => {
+  const store = freshStore({
+    version: STORE_VERSION,
+    settings: { activeWorkspace: DEFAULT_WORKSPACE_ID, theme: 'neon', accent: '#fff' },
+    workspaces: [{ id: DEFAULT_WORKSPACE_ID, name: 'D' }],
+    notes: []
+  });
+  assert.equal(store.getTheme(), 'system');
+  assert.equal(store.getAccent(), 'violet');
+});
+
+test('setTheme and setAccent persist across reload', () => {
+  const dir = storeDir();
+  const first = openStore(dir);
+  first.setTheme('dark');
+  first.setAccent('blue');
+  first.flush();
+
+  const second = openStore(dir);
+  assert.equal(second.getTheme(), 'dark');
+  assert.equal(second.getAccent(), 'blue');
+});
+
+test('import replace preserves theme and accent', () => {
+  const store = freshStore();
+  store.setTheme('light');
+  store.setAccent('green');
+  store.replaceAll([{ id: 'a', text: 'x', workspaceId: DEFAULT_WORKSPACE_ID }]);
+  assert.equal(store.getTheme(), 'light');
+  assert.equal(store.getAccent(), 'green');
+});
+
 test('repairs notes and an active workspace pointing at a workspace that is gone', () => {
   const store = freshStore({
     version: STORE_VERSION,

@@ -19,5 +19,8 @@ contextBridge.exposeInMainWorld('manager', {
   deleteWorkspace: (id) => ipcRenderer.send('manager:deleteWorkspace', id),
   moveNote: (id, workspaceId) => ipcRenderer.send('manager:moveNote', { id, workspaceId }),
   exportAll: () => ipcRenderer.invoke('manager:export'),
-  importNotes: () => ipcRenderer.invoke('manager:import')
+  importNotes: () => ipcRenderer.invoke('manager:import'),
+  // Appearance (Manager-only theme + accent)
+  setTheme: (mode) => ipcRenderer.send('manager:setTheme', mode),
+  setAccent: (id) => ipcRenderer.send('manager:setAccent', id)
 });
