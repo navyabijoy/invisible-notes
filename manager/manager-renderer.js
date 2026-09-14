@@ -168,6 +168,11 @@ function htmlToText(html) {
       out += "\n";
       return;
     }
+    if (tag === "IMG") {
+      // Images have no text content; surface a glyph so the preview shows one.
+      out += "🖼️";
+      return;
+    }
     if (tag === "LI") {
       const list = node.parentElement;
       if (list && list.tagName === "OL") {

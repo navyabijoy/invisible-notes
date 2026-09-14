@@ -564,6 +564,7 @@ function buildTrayIcon() {
 function htmlToText(html) {
   return html
     .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<img\b[^>]*>/gi, "🖼️")
     .replace(/<\/(p|div|h[1-6]|li|ul|ol|blockquote|pre)>/gi, " ")
     .replace(/<[^>]*>/g, "")
     .replace(/&lt;/g, "<")
