@@ -1,1063 +1,1706 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ghost Notes: Private notes for public screens</title>
+    <meta
+      name="description"
+      content="Ghost Notes gives you floating notes that stay visible to you while remaining invisible to screen sharing and recording. Free, open source, local-first."
+    />
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
 
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ghost Notes: Private notes for public screens</title>
-  <meta name="description"
-    content="Ghost Notes gives you floating notes that stay visible to you while remaining invisible to screen sharing and recording. Free, open source, local-first." />
-  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <!-- Open Graph -->
+    <meta
+      property="og:title"
+      content="Ghost Notes: Private notes for public screens"
+    />
+    <meta
+      property="og:description"
+      content="Floating notes visible only to you. Invisible to screen shares and recordings."
+    />
+    <meta property="og:image" content="assets/og-image.png" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
 
-  <!-- Open Graph -->
-  <meta property="og:title" content="Ghost Notes: Private notes for public screens" />
-  <meta property="og:description"
-    content="Floating notes visible only to you. Invisible to screen shares and recordings." />
-  <meta property="og:image" content="assets/og-image.png" />
-  <meta property="og:type" content="website" />
-  <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <!-- Google tag (gtag.js) -->
+  <script
+    async
+    src="https://www.googletagmanager.com/gtag/js?id=G-XFEYSWR3G8"
+  ></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+    gtag("js", new Date());
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
-</head>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-XFEYSWR3G8"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag() { dataLayer.push(arguments); }
-  gtag('js', new Date());
+    gtag("config", "G-XFEYSWR3G8");
+  </script>
 
-  gtag('config', 'G-XFEYSWR3G8');
-</script>
+  <body>
+    <!-- ═══ NAV ═══════════════════════════════════════════════════ -->
+    <header class="site-nav">
+      <div class="wrap nav-inner">
+        <a href="/" class="brand">
+          <img src="favicon.svg" alt="Ghost Notes" width="24" height="24" />
+          Ghost Notes
+        </a>
 
-<body>
+        <nav class="nav-links" role="navigation" aria-label="Primary">
+          <a href="#features">Features</a>
+          <a href="#how-it-works">How it works</a>
+          <a href="#faq">FAQ</a>
+        </nav>
 
-  <!-- ═══ NAV ═══════════════════════════════════════════════════ -->
-  <header class="site-nav">
-    <div class="wrap nav-inner">
-      <a href="/" class="brand">
-        <img src="favicon.svg" alt="Ghost Notes" width="24" height="24" />
-        Ghost Notes
-      </a>
+        <a
+          href="#"
+          id="navGithubMain"
+          class="nav-github-link"
+          target="_blank"
+          rel="noopener"
+        >
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
+            />
+          </svg>
+          GitHub
+        </a>
 
-      <nav class="nav-links" role="navigation" aria-label="Primary">
+        <button
+          class="nav-toggle"
+          id="navToggle"
+          aria-label="Toggle navigation"
+          aria-expanded="false"
+        >
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+
+      <div class="nav-mobile" id="navMobile" hidden>
         <a href="#features">Features</a>
         <a href="#how-it-works">How it works</a>
         <a href="#faq">FAQ</a>
-      </nav>
-
-      <a href="#" id="navGithubMain" class="nav-github-link" target="_blank" rel="noopener">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path
-            d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-        </svg>
-        GitHub
-      </a>
-
-      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded="false">
-        <span></span><span></span><span></span>
-      </button>
-    </div>
-
-    <div class="nav-mobile" id="navMobile" hidden>
-      <a href="#features">Features</a>
-      <a href="#how-it-works">How it works</a>
-      <a href="#faq">FAQ</a>
-      <a href="#" id="navGithubMob" target="_blank" rel="noopener">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"
-          style="margin-right: 8px; vertical-align: -2px;">
-          <path
-            d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-        </svg>
-        GitHub
-      </a>
-    </div>
-  </header>
-
-  <!-- ═══ HERO ═══════════════════════════════════════════════════ -->
-  <section class="hero">
-    <div class="wrap">
-      <div class="hero-panel">
-
-        <!-- Left: text content -->
-        <div class="hero-content">
-          <div class="hero-badge">Private notes on your screen</div>
-          <h1>Notes that stay<br>on your screen.</h1>
-          <p class="hero-sub">Ghost Notes lets you write notes that remain visible to you but invisible in screen shares
-            and recordings.</p>
-
-          <div class="hero-ctas">
-            <a href="#" id="heroDownload" class="cta-primary">
-              <!-- Icon injected by JS -->
-              <span class="dl-icon dl-icon-mac">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path
-                    d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-                </svg>
-              </span>
-              <span class="dl-icon dl-icon-win">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path
-                    d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801" />
-                </svg>
-              </span>
-              <span class="dl-label">Download for Mac</span>
-            </a>
-            <a href="#" id="dlAlt" class="cta-secondary">
-              <span class="dl-icon dl-icon-win">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path
-                    d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801" />
-                </svg>
-              </span>
-              <span class="dl-icon dl-icon-mac">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path
-                    d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-                </svg>
-              </span>
-              <span class="dl-label">Download for Windows</span>
-            </a>
-          </div>
-
-          <div class="hero-meta">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="3" y="11" width="18" height="11" rx="2" />
-              <path d="M7 11V7a5 5 0 0110 0v4" />
-            </svg>
-            100% local
-            <span class="sep">·</span>
-            No account
-            <span class="sep">·</span>
-            Open source (MIT)
-            <span class="sep">·</span>
-            macOS 12+ · Windows 10+
-          </div>
-        </div>
-
-        <!-- Right: visual -->
-        <div class="hero-visual">
-          <!-- Floating badge elements -->
-          <div class="hero-float hero-float-lock">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="3" y="11" width="18" height="11" rx="2" />
-              <path d="M7 11V7a5 5 0 0110 0v4" />
-            </svg>
-          </div>
-          <div class="hero-float hero-float-eye">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path
-                d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22" />
-            </svg>
-          </div>
-          <div class="hero-float hero-float-ghost">
-            <img src="favicon.svg" alt="" width="24" height="24" />
-          </div>
-
-          <!-- Sticky note mock -->
-          <div class="hero-note">
-            <div class="hero-note-chrome">
-              <span class="hero-note-dot" style="background:#f4c04d;"></span>
-              <span class="hero-note-dot" style="background:#e8a04a;"></span>
-              <span class="hero-note-dot" style="background:#d99a5b;"></span>
-              <div class="hero-note-icons">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <path d="M12 2a4 4 0 014 4c0 1.5-1 2.5-1 4l3 3H6l3-3c0-1.5-1-2.5-1-4a4 4 0 014-4zM12 17v5" />
-                </svg>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01" />
-                </svg>
-                <img src="favicon.svg" alt="" width="12" height="12" />
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <circle cx="5" cy="12" r="1.6" />
-                  <circle cx="12" cy="12" r="1.6" />
-                  <circle cx="19" cy="12" r="1.6" />
-                </svg>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </div>
-            </div>
-            <div class="hero-note-body">
-              <p class="hero-note-title">Interview talking points:</p>
-              <ul>
-                <li>Project overview</li>
-                <li>Key achievements</li>
-                <li>Technical decisions</li>
-                <li>What I learned</li>
-              </ul>
-              <span class="hero-note-cursor"></span>
-            </div>
-          </div>
-
-          <!-- Comparison strip -->
-          <div class="hero-comparison">
-            <div class="hero-comp-col">
-              <div class="hero-comp-label">On your screen</div>
-              <div class="hero-comp-img local-ph">
-                <div class="hero-comp-mini">
-                  <span class="hero-comp-mini-dot" style="background:#fc625d;"></span>
-                  <span class="hero-comp-mini-dot" style="background:#fdbc40;"></span>
-                  <span class="hero-comp-mini-dot" style="background:#34c749;"></span>
-                  <div class="hero-comp-mini-note">
-                    Interview talking points:<br>
-                    &bull; Project overview<br>
-                    &bull; Key achievements<br>
-                    &bull; Technical decisions<br>
-                    &bull; What I learned
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="hero-comp-arrow">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </div>
-            <div class="hero-comp-col">
-              <div class="hero-comp-label">In screen share / recording</div>
-              <div class="hero-comp-img shared-ph"></div>
-            </div>
-          </div>
-
-        </div>
+        <a href="#" id="navGithubMob" target="_blank" rel="noopener">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            aria-hidden="true"
+            style="margin-right: 8px; vertical-align: -2px"
+          >
+            <path
+              d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
+            />
+          </svg>
+          GitHub
+        </a>
       </div>
-    </div>
-  </section>
+    </header>
 
-  <!-- ═══ SCREEN-SHARE PROOF ════════════════════════════════════ -->
-  <section class="proof-section" id="how-it-works">
-    <div class="wrap">
-      <div class="section-eyebrow reveal">Core feature</div>
-      <h2 class="reveal">Visible to you.<br>Invisible to everyone else.</h2>
-      <p class="proof-sub reveal">Ghost Notes uses window capture protection built right into your operating system.
-        Zoom, Google Meet, Teams, QuickTime, and OBS all skip the note automatically, since your OS excludes it for
-        them.</p>
+    <!-- ═══ HERO ═══════════════════════════════════════════════════ -->
+    <section class="hero">
+      <div class="wrap">
+        <div class="hero-panel">
+          <!-- Left: text content -->
+          <div class="hero-content">
+            <div class="hero-badge">Private notes on your screen</div>
+            <h1>Notes that stay<br />on your screen.</h1>
+            <p class="hero-sub">
+              Ghost Notes lets you write notes that remain visible to you but
+              invisible in screen shares and recordings.
+            </p>
 
-      <div class="split-demo">
-        <div class="split-panel">
-          <div class="split-label">
-            <span class="dot dot-green"></span>
-            Your screen
-          </div>
-          <div class="split-img local-ph">
-            <img src="assets/demo-local.png" alt="Your screen with note visible" onerror="this.style.display='none';" />
-          </div>
-        </div>
+            <div class="hero-ctas">
+              <a href="#" id="heroDownload" class="cta-primary">
+                <!-- Icon injected by JS -->
+                <span class="dl-icon dl-icon-mac">
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"
+                    />
+                  </svg>
+                </span>
+                <span class="dl-icon dl-icon-win">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"
+                    />
+                  </svg>
+                </span>
+                <span class="dl-label">Download for Mac</span>
+              </a>
+              <a href="#" id="dlAlt" class="cta-secondary">
+                <span class="dl-icon dl-icon-win">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"
+                    />
+                  </svg>
+                </span>
+                <span class="dl-icon dl-icon-mac">
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"
+                    />
+                  </svg>
+                </span>
+                <span class="dl-label">Download for Windows</span>
+              </a>
+            </div>
 
-        <div class="split-divider">
-          <div class="split-divider-inner">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
-          </div>
-        </div>
-
-        <div class="split-panel">
-          <div class="split-label">
-            <span class="dot dot-red"></span>
-            In the recording
-          </div>
-          <div class="split-img shared-ph">
-            <img src="assets/demo-shared.png" alt="Screen recording with note absent"
-              onerror="this.style.display='none';" />
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══ FEATURES ══════════════════════════════════════════════ -->
-  <section class="features-section" id="features">
-    <div class="wrap">
-      <div class="features-header">
-        <div class="section-eyebrow reveal">Built for focus</div>
-        <h2 class="reveal">Everything you need,<br>nothing you don't.</h2>
-        <p class="reveal">Powerful features to keep your notes private, accessible, and out of the way.</p>
-      </div>
-
-      <div class="features-grid">
-
-        <!-- 1. Invisible in screen shares -->
-        <div class="feature-card">
-          <div class="feature-card-text">
-            <div class="feature-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path
-                  d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22" />
+            <div class="hero-meta">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="11" width="18" height="11" rx="2" />
+                <path d="M7 11V7a5 5 0 0110 0v4" />
               </svg>
-            </div>
-            <h3>Invisible in screen shares</h3>
-            <p>Your notes stay visible locally while being excluded from Zoom, Meet, Teams, OBS, QuickTime, and any
-              other capture.</p>
-          </div>
-          <div class="feature-visual">
-            <div class="mini-window">
-              <div class="mini-chrome">
-                <span class="mini-dot red"></span>
-                <span class="mini-dot yellow"></span>
-                <span class="mini-dot green"></span>
-              </div>
-              <div class="mini-body no-note">
-                <img src="assets/feature-invisible.png" alt="" onerror="this.style.display='none';" />
-              </div>
+              100% local
+              <span class="sep">·</span>
+              No account
+              <span class="sep">·</span>
+              Open source (MIT)
+              <span class="sep">·</span>
+              macOS 12+ · Windows 10+
             </div>
           </div>
-        </div>
 
-        <!-- 2. Always on top -->
-        <div class="feature-card">
-          <div class="feature-card-text">
-            <div class="feature-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" />
-              </svg>
-            </div>
-            <h3>Always on top</h3>
-            <p>Notes float above all other windows, including fullscreen apps, so your talking points are always in
-              view.</p>
-          </div>
-          <div class="feature-visual">
-            <div class="mini-window">
-              <div class="mini-chrome">
-                <span class="mini-dot red"></span>
-                <span class="mini-dot yellow"></span>
-                <span class="mini-dot green"></span>
-              </div>
-              <div class="mini-body with-note">
-                <img src="assets/feature-always-top.png" alt="" onerror="this.style.display='none';" />
-                <div class="mock-note">Talking points:<br>• Intro<br>• Demo<br>• Q&A</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. Click-through -->
-        <div class="feature-card">
-          <div class="feature-card-text">
-            <div class="feature-icon">
-              <img src="favicon.svg" alt="" width="16" height="16" style="border-radius:4px;" />
-            </div>
-            <h3>Click-through mode</h3>
-            <p>Tap the ghost button and clicks pass straight through to whatever's underneath.</p>
-          </div>
-          <div class="feature-visual">
-            <div class="mini-window">
-              <div class="mini-chrome">
-                <span class="mini-dot red"></span>
-                <span class="mini-dot yellow"></span>
-                <span class="mini-dot green"></span>
-              </div>
-              <div class="mini-body with-note">
-                <img src="assets/feature-clickthrough.png" alt="" onerror="this.style.display='none';" />
-                <div class="mock-note" style="opacity:0.45;">Click-through<br>enabled</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4. Beautifully simple -->
-        <div class="feature-card">
-          <div class="feature-card-text">
-            <div class="feature-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="3" />
-                <path
-                  d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
-              </svg>
-            </div>
-            <h3>Beautifully simple</h3>
-            <p>Change color, opacity, and text size in one click. Drag to move, drag edges to resize.</p>
-          </div>
-          <div class="feature-visual">
-            <div class="mini-window">
-              <div class="mini-chrome">
-                <span class="mini-dot red"></span>
-                <span class="mini-dot yellow"></span>
-                <span class="mini-dot green"></span>
-              </div>
-              <div class="mini-body">
-                <img src="assets/feature-colors.png" alt=""
-                  onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
-                <div class="mock-colors" style="display:none; width:100%;">
-                  <div class="color-swatches">
-                    <div class="color-swatch" style="background:#fef9c3;border:1px solid #fde68a;"></div>
-                    <div class="color-swatch" style="background:#dbeafe;border:1px solid #bfdbfe;"></div>
-                    <div class="color-swatch" style="background:#fce7f3;border:1px solid #fbcfe8;"></div>
-                    <div class="color-swatch" style="background:#dcfce7;border:1px solid #bbf7d0;"></div>
-                    <div class="color-swatch" style="background:#ede9fe;border:1px solid #ddd6fe;"></div>
-                    <div class="color-swatch" style="background:#fff;border:1px solid #e4e4e8;"></div>
-                  </div>
-                  <div class="mock-slider">
-                    <div class="slider-row">
-                      <span class="slider-label">BG</span>
-                      <div class="slider-track">
-                        <div class="slider-fill" style="width:70%;"></div>
-                        <div class="slider-thumb"></div>
-                      </div>
-                    </div>
-                    <div class="slider-row">
-                      <span class="slider-label">Sz</span>
-                      <div class="slider-track">
-                        <div class="slider-fill" style="width:45%;"></div>
-                        <div class="slider-thumb" style="right:55%;"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 5. Notes Manager -->
-        <div class="feature-card">
-          <div class="feature-card-text">
-            <div class="feature-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <line x1="8" y1="6" x2="21" y2="6" />
-                <line x1="8" y1="12" x2="21" y2="12" />
-                <line x1="8" y1="18" x2="21" y2="18" />
-                <line x1="3" y1="6" x2="3.01" y2="6" />
-                <line x1="3" y1="12" x2="3.01" y2="12" />
-                <line x1="3" y1="18" x2="3.01" y2="18" />
-              </svg>
-            </div>
-            <h3>Notes Manager</h3>
-            <p>Closing a note doesn't delete it. Search, reopen, rename, and delete from one place.</p>
-          </div>
-          <div class="feature-visual">
-            <div class="mini-window">
-              <div class="mini-chrome">
-                <span class="mini-dot red"></span>
-                <span class="mini-dot yellow"></span>
-                <span class="mini-dot green"></span>
-              </div>
-              <div class="mini-body" style="align-items:flex-start;">
-                <img src="assets/feature-manager.png" alt=""
-                  onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
-                <div class="mock-manager" style="display:none; width:100%;">
-                  <div class="mock-manager-search">Search notes…</div>
-                  <div class="mock-manager-row">
-                    <div class="mock-dot" style="background:#5b4bff;"></div>
-                    <div class="mock-manager-title">Interview prep</div>
-                    <div class="mock-manager-date">Today</div>
-                  </div>
-                  <div class="mock-manager-row">
-                    <div class="mock-dot" style="background:#3b82f6;"></div>
-                    <div class="mock-manager-title">Project ideas</div>
-                    <div class="mock-manager-date">Yesterday</div>
-                  </div>
-                  <div class="mock-manager-row">
-                    <div class="mock-dot" style="background:#ef4444;"></div>
-                    <div class="mock-manager-title">Daily plan</div>
-                    <div class="mock-manager-date">Apr 24</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 6. 100% local -->
-        <div class="feature-card">
-          <div class="feature-card-text">
-            <div class="feature-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <!-- Right: visual -->
+          <div class="hero-visual">
+            <!-- Floating badge elements -->
+            <div class="hero-float hero-float-lock">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
                 <rect x="3" y="11" width="18" height="11" rx="2" />
                 <path d="M7 11V7a5 5 0 0110 0v4" />
               </svg>
             </div>
-            <h3>100% local</h3>
-            <p>Notes are stored on your device only. No account. No cloud. No telemetry.</p>
-          </div>
-          <div class="feature-visual">
-            <div class="mini-window">
-              <div class="mini-chrome">
-                <span class="mini-dot red"></span>
-                <span class="mini-dot yellow"></span>
-                <span class="mini-dot green"></span>
-              </div>
-              <div class="mini-body">
-                <div class="mock-badge-local">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
-                    stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <rect x="3" y="11" width="18" height="11" rx="2" />
-                    <path d="M7 11V7a5 5 0 0110 0v4" />
+            <div class="hero-float hero-float-eye">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path
+                  d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22"
+                />
+              </svg>
+            </div>
+            <div class="hero-float hero-float-ghost">
+              <img src="favicon.svg" alt="" width="24" height="24" />
+            </div>
+
+            <!-- Sticky note mock -->
+            <div class="hero-note">
+              <div class="hero-note-chrome">
+                <span class="hero-note-dot" style="background: #f4c04d"></span>
+                <span class="hero-note-dot" style="background: #e8a04a"></span>
+                <span class="hero-note-dot" style="background: #d99a5b"></span>
+                <div class="hero-note-icons">
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M12 2a4 4 0 014 4c0 1.5-1 2.5-1 4l3 3H6l3-3c0-1.5-1-2.5-1-4a4 4 0 014-4zM12 17v5"
+                    />
                   </svg>
-                  <span>Your data stays<br><strong>on your device</strong></span>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01" />
+                  </svg>
+                  <img src="favicon.svg" alt="" width="12" height="12" />
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <circle cx="5" cy="12" r="1.6" />
+                    <circle cx="12" cy="12" r="1.6" />
+                    <circle cx="19" cy="12" r="1.6" />
+                  </svg>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </div>
+              </div>
+              <div class="hero-note-body">
+                <p class="hero-note-title">Interview talking points:</p>
+                <ul>
+                  <li>Project overview</li>
+                  <li>Key achievements</li>
+                  <li>Technical decisions</li>
+                  <li>What I learned</li>
+                </ul>
+                <span class="hero-note-cursor"></span>
+              </div>
+            </div>
+
+            <!-- Comparison strip -->
+            <div class="hero-comparison">
+              <div class="hero-comp-col">
+                <div class="hero-comp-label">On your screen</div>
+                <div class="hero-comp-img local-ph">
+                  <div class="hero-comp-mini">
+                    <span
+                      class="hero-comp-mini-dot"
+                      style="background: #fc625d"
+                    ></span>
+                    <span
+                      class="hero-comp-mini-dot"
+                      style="background: #fdbc40"
+                    ></span>
+                    <span
+                      class="hero-comp-mini-dot"
+                      style="background: #34c749"
+                    ></span>
+                    <div class="hero-comp-mini-note">
+                      Interview talking points:<br />
+                      &bull; Project overview<br />
+                      &bull; Key achievements<br />
+                      &bull; Technical decisions<br />
+                      &bull; What I learned
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="hero-comp-arrow">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </div>
+              <div class="hero-comp-col">
+                <div class="hero-comp-label">In screen share / recording</div>
+                <div class="hero-comp-img shared-ph"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ SCREEN-SHARE PROOF ════════════════════════════════════ -->
+    <section class="proof-section" id="how-it-works">
+      <div class="wrap">
+        <div class="section-eyebrow reveal">Core feature</div>
+        <h2 class="reveal">Visible to you.<br />Invisible to everyone else.</h2>
+        <p class="proof-sub reveal">
+          Ghost Notes uses window capture protection built right into your
+          operating system. Zoom, Google Meet, Teams, QuickTime, and OBS all
+          skip the note automatically, since your OS excludes it for them.
+        </p>
+
+        <div class="split-demo">
+          <div class="split-panel">
+            <div class="split-label">
+              <span class="dot dot-green"></span>
+              Your screen
+            </div>
+            <div class="split-img local-ph">
+              <img
+                src="assets/demo-local.png"
+                alt="Your screen with note visible"
+                onerror="this.style.display = 'none'"
+              />
+            </div>
+          </div>
+
+          <div class="split-divider">
+            <div class="split-divider-inner">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </div>
+          </div>
+
+          <div class="split-panel">
+            <div class="split-label">
+              <span class="dot dot-red"></span>
+              In the recording
+            </div>
+            <div class="split-img shared-ph">
+              <img
+                src="assets/demo-shared.png"
+                alt="Screen recording with note absent"
+                onerror="this.style.display = 'none'"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ FEATURES ══════════════════════════════════════════════ -->
+    <section class="features-section" id="features">
+      <div class="wrap">
+        <div class="features-header">
+          <div class="section-eyebrow reveal">Built for focus</div>
+          <h2 class="reveal">Everything you need,<br />nothing you don't.</h2>
+          <p class="reveal">
+            Powerful features to keep your notes private, accessible, and out of
+            the way.
+          </p>
+        </div>
+
+        <div class="features-grid">
+          <!-- 1. Invisible in screen shares -->
+          <div class="feature-card">
+            <div class="feature-card-text">
+              <div class="feature-icon">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.9"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24M1 1l22 22"
+                  />
+                </svg>
+              </div>
+              <h3>Invisible in screen shares</h3>
+              <p>
+                Your notes stay visible locally while being excluded from Zoom,
+                Meet, Teams, OBS, QuickTime, and any other capture.
+              </p>
+            </div>
+            <div class="feature-visual">
+              <div class="mini-window">
+                <div class="mini-chrome">
+                  <span class="mini-dot red"></span>
+                  <span class="mini-dot yellow"></span>
+                  <span class="mini-dot green"></span>
+                </div>
+                <div class="mini-body no-note">
+                  <img
+                    src="assets/feature-invisible.png"
+                    alt=""
+                    onerror="this.style.display = 'none'"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Always on top -->
+          <div class="feature-card">
+            <div class="feature-card-text">
+              <div class="feature-icon">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.9"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"
+                  />
+                </svg>
+              </div>
+              <h3>Always on top</h3>
+              <p>
+                Notes float above all other windows, including fullscreen apps,
+                so your talking points are always in view.
+              </p>
+            </div>
+            <div class="feature-visual">
+              <div class="mini-window">
+                <div class="mini-chrome">
+                  <span class="mini-dot red"></span>
+                  <span class="mini-dot yellow"></span>
+                  <span class="mini-dot green"></span>
+                </div>
+                <div class="mini-body with-note">
+                  <img
+                    src="assets/feature-always-top.png"
+                    alt=""
+                    onerror="this.style.display = 'none'"
+                  />
+                  <div class="mock-note">
+                    Talking points:<br />• Intro<br />• Demo<br />• Q&A
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Click-through -->
+          <div class="feature-card">
+            <div class="feature-card-text">
+              <div class="feature-icon">
+                <img
+                  src="favicon.svg"
+                  alt=""
+                  width="16"
+                  height="16"
+                  style="border-radius: 4px"
+                />
+              </div>
+              <h3>Click-through mode</h3>
+              <p>
+                Tap the ghost button and clicks pass straight through to
+                whatever's underneath.
+              </p>
+            </div>
+            <div class="feature-visual">
+              <div class="mini-window">
+                <div class="mini-chrome">
+                  <span class="mini-dot red"></span>
+                  <span class="mini-dot yellow"></span>
+                  <span class="mini-dot green"></span>
+                </div>
+                <div class="mini-body with-note">
+                  <img
+                    src="assets/feature-clickthrough.png"
+                    alt=""
+                    onerror="this.style.display = 'none'"
+                  />
+                  <div class="mock-note" style="opacity: 0.45">
+                    Click-through<br />enabled
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Beautifully simple -->
+          <div class="feature-card">
+            <div class="feature-card-text">
+              <div class="feature-icon">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.9"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="3" />
+                  <path
+                    d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"
+                  />
+                </svg>
+              </div>
+              <h3>Beautifully simple</h3>
+              <p>
+                Change color, opacity, and text size in one click. Drag to move,
+                drag edges to resize.
+              </p>
+            </div>
+            <div class="feature-visual">
+              <div class="mini-window">
+                <div class="mini-chrome">
+                  <span class="mini-dot red"></span>
+                  <span class="mini-dot yellow"></span>
+                  <span class="mini-dot green"></span>
+                </div>
+                <div class="mini-body">
+                  <img
+                    src="assets/feature-colors.png"
+                    alt=""
+                    onerror="
+                      this.style.display = 'none';
+                      this.nextElementSibling.style.display = 'flex';
+                    "
+                  />
+                  <div class="mock-colors" style="display: none; width: 100%">
+                    <div class="color-swatches">
+                      <div
+                        class="color-swatch"
+                        style="background: #fef9c3; border: 1px solid #fde68a"
+                      ></div>
+                      <div
+                        class="color-swatch"
+                        style="background: #dbeafe; border: 1px solid #bfdbfe"
+                      ></div>
+                      <div
+                        class="color-swatch"
+                        style="background: #fce7f3; border: 1px solid #fbcfe8"
+                      ></div>
+                      <div
+                        class="color-swatch"
+                        style="background: #dcfce7; border: 1px solid #bbf7d0"
+                      ></div>
+                      <div
+                        class="color-swatch"
+                        style="background: #ede9fe; border: 1px solid #ddd6fe"
+                      ></div>
+                      <div
+                        class="color-swatch"
+                        style="background: #fff; border: 1px solid #e4e4e8"
+                      ></div>
+                    </div>
+                    <div class="mock-slider">
+                      <div class="slider-row">
+                        <span class="slider-label">BG</span>
+                        <div class="slider-track">
+                          <div class="slider-fill" style="width: 70%"></div>
+                          <div class="slider-thumb"></div>
+                        </div>
+                      </div>
+                      <div class="slider-row">
+                        <span class="slider-label">Sz</span>
+                        <div class="slider-track">
+                          <div class="slider-fill" style="width: 45%"></div>
+                          <div class="slider-thumb" style="right: 55%"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. Notes Manager -->
+          <div class="feature-card">
+            <div class="feature-card-text">
+              <div class="feature-icon">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.9"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="8" y1="6" x2="21" y2="6" />
+                  <line x1="8" y1="12" x2="21" y2="12" />
+                  <line x1="8" y1="18" x2="21" y2="18" />
+                  <line x1="3" y1="6" x2="3.01" y2="6" />
+                  <line x1="3" y1="12" x2="3.01" y2="12" />
+                  <line x1="3" y1="18" x2="3.01" y2="18" />
+                </svg>
+              </div>
+              <h3>Notes Manager</h3>
+              <p>
+                Closing a note doesn't delete it. Search, reopen, rename, and
+                delete from one place.
+              </p>
+            </div>
+            <div class="feature-visual">
+              <div class="mini-window">
+                <div class="mini-chrome">
+                  <span class="mini-dot red"></span>
+                  <span class="mini-dot yellow"></span>
+                  <span class="mini-dot green"></span>
+                </div>
+                <div class="mini-body" style="align-items: flex-start">
+                  <img
+                    src="assets/feature-manager.png"
+                    alt=""
+                    onerror="
+                      this.style.display = 'none';
+                      this.nextElementSibling.style.display = 'flex';
+                    "
+                  />
+                  <div class="mock-manager" style="display: none; width: 100%">
+                    <div class="mock-manager-search">Search notes…</div>
+                    <div class="mock-manager-row">
+                      <div class="mock-dot" style="background: #5b4bff"></div>
+                      <div class="mock-manager-title">Interview prep</div>
+                      <div class="mock-manager-date">Today</div>
+                    </div>
+                    <div class="mock-manager-row">
+                      <div class="mock-dot" style="background: #3b82f6"></div>
+                      <div class="mock-manager-title">Project ideas</div>
+                      <div class="mock-manager-date">Yesterday</div>
+                    </div>
+                    <div class="mock-manager-row">
+                      <div class="mock-dot" style="background: #ef4444"></div>
+                      <div class="mock-manager-title">Daily plan</div>
+                      <div class="mock-manager-date">Apr 24</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6. 100% local -->
+          <div class="feature-card">
+            <div class="feature-card-text">
+              <div class="feature-icon">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.9"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect x="3" y="11" width="18" height="11" rx="2" />
+                  <path d="M7 11V7a5 5 0 0110 0v4" />
+                </svg>
+              </div>
+              <h3>100% local</h3>
+              <p>
+                Notes are stored on your device only. No account. No cloud. No
+                telemetry.
+              </p>
+            </div>
+            <div class="feature-visual">
+              <div class="mini-window">
+                <div class="mini-chrome">
+                  <span class="mini-dot red"></span>
+                  <span class="mini-dot yellow"></span>
+                  <span class="mini-dot green"></span>
+                </div>
+                <div class="mini-body">
+                  <div class="mock-badge-local">
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <rect x="3" y="11" width="18" height="11" rx="2" />
+                      <path d="M7 11V7a5 5 0 0110 0v4" />
+                    </svg>
+                    <span
+                      >Your data stays<br /><strong
+                        >on your device</strong
+                      ></span
+                    >
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+        <!-- /features-grid -->
+      </div>
+    </section>
 
-      </div><!-- /features-grid -->
-    </div>
-  </section>
+    <!-- ═══ NOTES MANAGER ════════════════════════════════════════ -->
+    <section class="manager-section" id="manager">
+      <div class="wrap manager-inner">
+        <div class="manager-text">
+          <div class="section-eyebrow">Notes Manager</div>
+          <h2>Close it.<br />Never lose it.</h2>
+          <p>
+            Closing a note simply hides it, nothing gets deleted. Every note
+            lives in the Notes Manager until you decide to remove it, and you
+            can search, reopen, rename, or delete any of them from one place.
+          </p>
+          <div class="manager-shortcut">
+            Open with
+            <kbd>&#8984;</kbd><kbd>&#8679;</kbd><kbd>M</kbd>
+            <span class="shortcut-win">or Ctrl+Shift+M on Windows</span>
+          </div>
+        </div>
 
-  <!-- ═══ NOTES MANAGER ════════════════════════════════════════ -->
-  <section class="manager-section" id="manager">
-    <div class="wrap manager-inner">
-
-      <div class="manager-text">
-        <div class="section-eyebrow">Notes Manager</div>
-        <h2>Close it.<br>Never lose it.</h2>
-        <p>Closing a note simply hides it, nothing gets deleted. Every note lives in the Notes Manager until you decide
-          to remove it, and you can search, reopen, rename, or delete any of them from one place.</p>
-        <div class="manager-shortcut">
-          Open with
-          <kbd>&#8984;</kbd><kbd>&#8679;</kbd><kbd>M</kbd>
-          <span class="shortcut-win">or Ctrl+Shift+M on Windows</span>
+        <div class="manager-visual">
+          <img
+            src="assets/notes-manager.png"
+            alt="Ghost Notes Manager showing a list of saved notes with search"
+            onerror="
+              this.style.display = 'none';
+              this.nextElementSibling.style.display = 'block';
+            "
+          />
+          <div class="manager-ph" style="display: none"></div>
         </div>
       </div>
+    </section>
 
-      <div class="manager-visual">
-        <img src="assets/notes-manager.png" alt="Ghost Notes Manager showing a list of saved notes with search"
-          onerror="this.style.display='none';this.nextElementSibling.style.display='block';" />
-        <div class="manager-ph" style="display:none;"></div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ═══ PRIVACY ═══════════════════════════════════════════════ -->
-  <section class="privacy-section">
-    <div class="wrap">
-      <div class="privacy-panel">
-        <div class="privacy-left">
-          <div class="section-eyebrow" style="margin-bottom:20px;">Privacy first</div>
-          <h2>Your notes stay<br>on your device.</h2>
-          <p>Ghost Notes stores everything locally. No server. No account. No analytics. The app never reads or
-            transmits your note contents.</p>
-          <a href="#" id="privacyGithub" target="_blank" rel="noopener" class="oss-link">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path
-                d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-            </svg>
-            Open source · MIT licensed
-          </a>
-        </div>
-
-        <div class="privacy-right">
-          <div class="privacy-tag">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="3" y="11" width="18" height="11" rx="2" />
-              <path d="M7 11V7a5 5 0 0110 0v4" />
-            </svg>
-            No account
-          </div>
-          <div class="privacy-tag">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
-              <path
-                d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z" />
-            </svg>
-            No cloud storage
-          </div>
-          <div class="privacy-tag">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
-            No telemetry
-          </div>
-          <div class="privacy-tag">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <line x1="1" y1="1" x2="23" y2="23" />
-              <path d="M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 0115 .14" />
-              <path d="M10.71 5.05A16 16 0 0122.56 9M1.42 9a15.91 15.91 0 014.7-2.88" />
-              <path d="M8.53 16.11a6 6 0 016.95 0" />
-              <line x1="12" y1="20" x2="12.01" y2="20" />
-            </svg>
-            Works offline
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══ SHORTCUTS ══════════════════════════════════════════════ -->
-  <section class="shortcuts-section" id="shortcuts">
-    <div class="wrap">
-      <div class="shortcuts-inner">
-        <div class="shortcuts-text reveal">
-          <h2>Keyboard<br>shortcuts</h2>
-          <p>Standard shortcuts activate only while a Ghost Notes window has focus. A separate global recovery shortcut creates a note when every window is hidden.</p>
-        </div>
-
-        <div class="shortcut-table reveal" role="table">
-          <div class="shortcut-row shortcut-head" role="row">
-            <div role="columnheader">Action</div>
-            <div role="columnheader">macOS</div>
-            <div role="columnheader">Windows</div>
-          </div>
-          <div class="shortcut-row shortcut-body" role="row">
-            <div role="cell">New note</div>
-            <div role="cell"><kbd>&#8984;</kbd><kbd>&#8679;</kbd><kbd>N</kbd></div>
-            <div role="cell"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>N</kbd></div>
-          </div>
-          <div class="shortcut-row shortcut-body" role="row">
-            <div role="cell">New note (global recovery)</div>
-            <div role="cell"><kbd>&#8984;</kbd><kbd>Option</kbd><kbd>&#8679;</kbd><kbd>N</kbd></div>
-            <div role="cell"><kbd>Ctrl</kbd><kbd>Alt</kbd><kbd>Shift</kbd><kbd>N</kbd></div>
-          </div>
-          <div class="shortcut-row shortcut-body" role="row">
-            <div role="cell">Notes Manager</div>
-            <div role="cell"><kbd>&#8984;</kbd><kbd>&#8679;</kbd><kbd>M</kbd></div>
-            <div role="cell"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>M</kbd></div>
-          </div>
-          <div class="shortcut-row shortcut-body" role="row">
-            <div role="cell">Show / hide all notes</div>
-            <div role="cell"><kbd>&#8984;</kbd><kbd>&#8679;</kbd><kbd>H</kbd></div>
-            <div role="cell"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>H</kbd></div>
-          </div>
-          <div class="shortcut-row shortcut-body" role="row">
-            <div role="cell">Toggle click-through</div>
-            <div role="cell"><kbd>&#8984;</kbd><kbd>&#8679;</kbd><kbd>G</kbd></div>
-            <div role="cell"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>G</kbd></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══ FAQ ═══════════════════════════════════════════════════ -->
-  <section class="faq-section" id="faq">
-    <div class="wrap">
-      <div class="faq-header">
-        <div class="section-eyebrow reveal">FAQ</div>
-        <h2 class="reveal">Frequently asked questions</h2>
-        <p class="reveal">Everything you need to know about Ghost Notes.</p>
-      </div>
-
-      <div class="faq-container">
-
-        <div class="faq-item open">
-          <button class="faq-q" aria-expanded="true">
-            <span class="faq-q-icon">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-            </span>
-            <span class="faq-q-text">Is Ghost Notes free?</span>
-            <span class="faq-chev" aria-hidden="true"></span>
-          </button>
-          <div class="faq-a">
-            <div class="faq-a-inner">
-              <p>Yes. Ghost Notes is completely free and open source under the MIT license. No account, no subscription,
-                no telemetry.</p>
-              <div class="faq-ghost-icon">
-                <img src="favicon.svg" alt="" width="24" height="24" />
-              </div>
+    <!-- ═══ PRIVACY ═══════════════════════════════════════════════ -->
+    <section class="privacy-section">
+      <div class="wrap">
+        <div class="privacy-panel">
+          <div class="privacy-left">
+            <div class="section-eyebrow" style="margin-bottom: 20px">
+              Privacy first
             </div>
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <button class="faq-q" aria-expanded="false">
-            <span class="faq-q-icon">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
+            <h2>Your notes stay<br />on your device.</h2>
+            <p>
+              Ghost Notes stores everything locally. No server. No account. No
+              analytics. The app never reads or transmits your note contents.
+            </p>
+            <a
+              href="#"
+              id="privacyGithub"
+              target="_blank"
+              rel="noopener"
+              class="oss-link"
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
+                />
               </svg>
-            </span>
-            <span class="faq-q-text">What platforms are supported?</span>
-            <span class="faq-chev" aria-hidden="true"></span>
-          </button>
-          <div class="faq-a">
-            <div class="faq-a-inner">
-              <p>macOS (Intel &amp; Apple Silicon, one universal build) and Windows 10/11. Screen capture exclusion uses
-                each OS's native content protection API. Windows needs build 19041 (May 2020 Update) or newer, and the
-                app will let you know on launch if yours is older.</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <button class="faq-q" aria-expanded="false">
-            <span class="faq-q-icon">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-            </span>
-            <span class="faq-q-text">Does it work with Zoom, Meet, Teams, and OBS?</span>
-            <span class="faq-chev" aria-hidden="true"></span>
-          </button>
-          <div class="faq-a">
-            <div class="faq-a-inner">
-              <p>Yes. Content protection works at the OS compositor level, so any application capturing the screen skips
-                Ghost Notes windows regardless of how it captures.</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <button class="faq-q" aria-expanded="false">
-            <span class="faq-q-icon">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-            </span>
-            <span class="faq-q-text">Are my notes stored online?</span>
-            <span class="faq-chev" aria-hidden="true"></span>
-          </button>
-          <div class="faq-a">
-            <div class="faq-a-inner">
-              <p>No. Notes are saved on your computer only. No server, no sync service, no analytics. The app works
-                fully offline.</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <button class="faq-q" aria-expanded="false">
-            <span class="faq-q-icon">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-            </span>
-            <span class="faq-q-text">Do I need an account?</span>
-            <span class="faq-chev" aria-hidden="true"></span>
-          </button>
-          <div class="faq-a">
-            <div class="faq-a-inner">
-              <p>No. Download, install, and use. No sign-in of any kind.</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <button class="faq-q" aria-expanded="false">
-            <span class="faq-q-icon">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-            </span>
-            <span class="faq-q-text">Does Ghost Notes work offline?</span>
-            <span class="faq-chev" aria-hidden="true"></span>
-          </button>
-          <div class="faq-a">
-            <div class="faq-a-inner">
-              <p>Yes. Ghost Notes runs and saves your notes fully offline, no internet connection needed.</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <button class="faq-q" aria-expanded="false">
-            <span class="faq-q-icon">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-            </span>
-            <span class="faq-q-text">How do I install Ghost Notes?</span>
-            <span class="faq-chev" aria-hidden="true"></span>
-          </button>
-          <div class="faq-a">
-            <div class="faq-a-inner">
-              <p>Download the installer (.dmg for macOS, .exe for Windows) and run it. No terminal, no build step, no
-                dependencies.</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <button class="faq-q" aria-expanded="false">
-            <span class="faq-q-icon">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-            </span>
-            <span class="faq-q-text">How do I update the application?</span>
-            <span class="faq-chev" aria-hidden="true"></span>
-          </button>
-          <div class="faq-a">
-            <div class="faq-a-inner">
-              <p>Download and install the latest release from GitHub Releases. Your notes are stored separately and are
-                not affected by updates.</p>
-            </div>
-          </div>
-        </div>
-
-      </div><!-- /faq-container -->
-
-      <!-- Still have questions -->
-      <div class="faq-contact reveal">
-        <div class="faq-contact-icon">
-          <img src="favicon.svg" alt="" width="24" height="24" />
-        </div>
-        <div class="faq-contact-text">
-          <strong>Still have questions?</strong>
-          <span>If you can't find the answer you're looking for, open an issue on GitHub.</span>
-        </div>
-        <a href="#" id="issuesLink" target="_blank" rel="noopener" class="cta-secondary"
-          style="font-size:13.5px; padding:9px 16px;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path
-              d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-          </svg>
-          Open an issue
-        </a>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ═══ BOTTOM CTA ══════════════════════════════════════════════ -->
-  <section class="callout-section">
-    <div class="wrap">
-      <div class="callout-panel">
-        <div class="callout-text">
-          <h2>Keep your notes.<br>Lose them from the recording.</h2>
-          <p>Free, open source, and local-first. No account required.</p>
-        </div>
-        <div class="callout-actions">
-          <a href="#" id="calloutDownload" class="cta-light">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
-            </svg>
-            <span class="dl-label">Download for Mac</span>
-          </a>
-          <a href="#" id="sourceLink" target="_blank" rel="noopener" class="cta-ghost">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path
-                d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-            </svg>
-            View on GitHub
-          </a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══ FOOTER ══════════════════════════════════════════════════ -->
-  <footer class="site-footer">
-    <div class="wrap">
-      <div class="footer-panel">
-        <div class="footer-top">
-
-          <!-- Brand column -->
-          <div class="footer-brand">
-            <a href="/" class="brand">
-              <img src="favicon.svg" alt="Ghost Notes" width="24" height="24" />
-              Ghost Notes
+              Open source · MIT licensed
             </a>
-            <p class="footer-brand-desc">Private notes that stay on your screen and out of your screen shares.</p>
-
-            <div class="footer-badges">
-              <span class="footer-badge">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <rect x="3" y="11" width="18" height="11" rx="2" />
-                  <path d="M7 11V7a5 5 0 0110 0v4" />
-                </svg>
-                100% local
-              </span>
-              <span class="footer-badge">No account</span>
-              <span class="footer-badge">Open source</span>
-            </div>
-
-            <p class="footer-platforms">macOS 12+ · Windows 10+</p>
-
-            <div class="footer-socials">
-              <a href="#" id="footGithub" target="_blank" rel="noopener" class="footer-social-link" aria-label="GitHub">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path
-                    d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
-                </svg>
-              </a>
-              <a href="#" id="footTwitter" target="_blank" rel="noopener" class="footer-social-link"
-                aria-label="Twitter / X">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path
-                    d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                </svg>
-              </a>
-              <a href="#" id="footIssues" target="_blank" rel="noopener" class="footer-social-link"
-                aria-label="Report an issue">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="12" />
-                  <line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
-              </a>
-            </div>
           </div>
 
-          <!-- Nav columns -->
-          <div class="footer-nav">
-            <div>
-              <div class="footer-col-head">Product</div>
-              <div class="footer-col">
-                <a href="#features">Features</a>
-                <a href="#how-it-works">How it works</a>
-                <a href="#manager">Notes Manager</a>
-                <a href="#shortcuts">Shortcuts</a>
-                <a href="#" id="footDownload">Download</a>
-              </div>
+          <div class="privacy-right">
+            <div class="privacy-tag">
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="11" width="18" height="11" rx="2" />
+                <path d="M7 11V7a5 5 0 0110 0v4" />
+              </svg>
+              No account
             </div>
-            <div>
-              <div class="footer-col-head">Resources</div>
-              <div class="footer-col">
-                <a href="#faq">FAQ</a>
-                <a href="#" id="releasesLink" target="_blank" rel="noopener">Releases</a>
-                <a href="#" id="releasesLink2" target="_blank" rel="noopener">Changelog</a>
-              </div>
+            <div class="privacy-tag">
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <polyline points="22 12 16 12 14 15 10 15 8 12 2 12" />
+                <path
+                  d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"
+                />
+              </svg>
+              No cloud storage
             </div>
-            <div>
-              <div class="footer-col-head">Community</div>
-              <div class="footer-col">
-                <a href="#" id="footGithub2" target="_blank" rel="noopener">GitHub</a>
-                <a href="#" id="footIssues2" target="_blank" rel="noopener">Report an issue</a>
-              </div>
+            <div class="privacy-tag">
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              No telemetry
             </div>
-          </div>
-
-        </div><!-- /footer-top -->
-
-        <div class="footer-bottom">
-          <p class="footer-copyright">&copy; 2026 Ghost Notes. MIT License.</p>
-          <div class="footer-legal">
-            <a href="#" id="footGithub3" target="_blank" rel="noopener">Open source</a>
-            <a href="#" id="footIssues3" target="_blank" rel="noopener">Report an issue</a>
+            <div class="privacy-tag">
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <line x1="1" y1="1" x2="23" y2="23" />
+                <path
+                  d="M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 0115 .14"
+                />
+                <path
+                  d="M10.71 5.05A16 16 0 0122.56 9M1.42 9a15.91 15.91 0 014.7-2.88"
+                />
+                <path d="M8.53 16.11a6 6 0 016.95 0" />
+                <line x1="12" y1="20" x2="12.01" y2="20" />
+              </svg>
+              Works offline
+            </div>
           </div>
         </div>
-      </div><!-- /footer-panel -->
-    </div>
-  </footer>
-
-  <!-- ═══ INSTALL HELP MODAL ═══════════════════════════════════ -->
-  <div class="install-modal-backdrop" id="installModal" hidden>
-    <div class="install-modal">
-      <button class="install-modal-close" id="installModalClose" aria-label="Close">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
-      </button>
-
-      <div class="install-modal-header">
-        <img src="favicon.svg" alt="" width="32" height="32" />
-        <h3>Almost there!</h3>
-        <p>Ghost Notes isn't code-signed yet, so your OS may show a warning.<br>Here's how to get past it:</p>
       </div>
+    </section>
 
-      <!-- Windows tab -->
-      <div class="install-tab" id="installTabWin">
-        <div class="install-tab-badge">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path
-              d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801" />
-          </svg>
-          Windows
+    <!-- ═══ SHORTCUTS ══════════════════════════════════════════════ -->
+    <section class="shortcuts-section" id="shortcuts">
+      <div class="wrap">
+        <div class="shortcuts-inner">
+          <div class="shortcuts-text reveal">
+            <h2>Keyboard<br />shortcuts</h2>
+            <p>
+              Standard shortcuts activate only while a Ghost Notes window has
+              focus. A separate global recovery shortcut creates a note when
+              every window is hidden.
+            </p>
+          </div>
+
+          <div class="shortcut-table reveal" role="table">
+            <div class="shortcut-row shortcut-head" role="row">
+              <div role="columnheader">Action</div>
+              <div role="columnheader">macOS</div>
+              <div role="columnheader">Windows</div>
+            </div>
+            <div class="shortcut-row shortcut-body" role="row">
+              <div role="cell">New note</div>
+              <div role="cell">
+                <kbd>&#8984;</kbd><kbd>&#8679;</kbd><kbd>N</kbd>
+              </div>
+              <div role="cell"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>N</kbd></div>
+            </div>
+            <div class="shortcut-row shortcut-body" role="row">
+              <div role="cell">New note (global recovery)</div>
+              <div role="cell">
+                <kbd>&#8984;</kbd><kbd>Option</kbd><kbd>&#8679;</kbd
+                ><kbd>N</kbd>
+              </div>
+              <div role="cell">
+                <kbd>Ctrl</kbd><kbd>Alt</kbd><kbd>Shift</kbd><kbd>N</kbd>
+              </div>
+            </div>
+            <div class="shortcut-row shortcut-body" role="row">
+              <div role="cell">Notes Manager</div>
+              <div role="cell">
+                <kbd>&#8984;</kbd><kbd>&#8679;</kbd><kbd>M</kbd>
+              </div>
+              <div role="cell"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>M</kbd></div>
+            </div>
+            <div class="shortcut-row shortcut-body" role="row">
+              <div role="cell">Show / hide all notes</div>
+              <div role="cell">
+                <kbd>&#8984;</kbd><kbd>&#8679;</kbd><kbd>H</kbd>
+              </div>
+              <div role="cell"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>H</kbd></div>
+            </div>
+            <div class="shortcut-row shortcut-body" role="row">
+              <div role="cell">Toggle click-through</div>
+              <div role="cell">
+                <kbd>&#8984;</kbd><kbd>&#8679;</kbd><kbd>G</kbd>
+              </div>
+              <div role="cell"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>G</kbd></div>
+            </div>
+          </div>
         </div>
-        <ol class="install-steps">
-          <li>Run the downloaded <strong>.exe</strong> installer.</li>
-          <li>Windows SmartScreen may show <em>"Windows protected your PC"</em>.</li>
-          <li>Click <strong>"More info"</strong> to reveal the option.</li>
-          <li>Click <strong>"Run anyway"</strong> to proceed.</li>
-        </ol>
-        <div class="install-visual">
-          <!-- <div class="smartscreen-mock"> -->
-          <!-- <div class="smartscreen-icon">
+      </div>
+    </section>
+
+    <!-- ═══ FAQ ═══════════════════════════════════════════════════ -->
+    <section class="faq-section" id="faq">
+      <div class="wrap">
+        <div class="faq-header">
+          <div class="section-eyebrow reveal">FAQ</div>
+          <h2 class="reveal">Frequently asked questions</h2>
+          <p class="reveal">Everything you need to know about Ghost Notes.</p>
+        </div>
+
+        <div class="faq-container">
+          <div class="faq-item open">
+            <button class="faq-q" aria-expanded="true">
+              <span class="faq-q-icon">
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </span>
+              <span class="faq-q-text">Is Ghost Notes free?</span>
+              <span class="faq-chev" aria-hidden="true"></span>
+            </button>
+            <div class="faq-a">
+              <div class="faq-a-inner">
+                <p>
+                  Yes. Ghost Notes is completely free and open source under the
+                  MIT license. No account, no subscription, no telemetry.
+                </p>
+                <div class="faq-ghost-icon">
+                  <img src="favicon.svg" alt="" width="24" height="24" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-q" aria-expanded="false">
+              <span class="faq-q-icon">
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </span>
+              <span class="faq-q-text">What platforms are supported?</span>
+              <span class="faq-chev" aria-hidden="true"></span>
+            </button>
+            <div class="faq-a">
+              <div class="faq-a-inner">
+                <p>
+                  macOS (Intel &amp; Apple Silicon, one universal build) and
+                  Windows 10/11. Screen capture exclusion uses each OS's native
+                  content protection API. Windows needs build 19041 (May 2020
+                  Update) or newer, and the app will let you know on launch if
+                  yours is older.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-q" aria-expanded="false">
+              <span class="faq-q-icon">
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </span>
+              <span class="faq-q-text"
+                >Does it work with Zoom, Meet, Teams, and OBS?</span
+              >
+              <span class="faq-chev" aria-hidden="true"></span>
+            </button>
+            <div class="faq-a">
+              <div class="faq-a-inner">
+                <p>
+                  Yes. Content protection works at the OS compositor level, so
+                  any application capturing the screen skips Ghost Notes windows
+                  regardless of how it captures.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-q" aria-expanded="false">
+              <span class="faq-q-icon">
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </span>
+              <span class="faq-q-text">Are my notes stored online?</span>
+              <span class="faq-chev" aria-hidden="true"></span>
+            </button>
+            <div class="faq-a">
+              <div class="faq-a-inner">
+                <p>
+                  No. Notes are saved on your computer only. No server, no sync
+                  service, no analytics. The app works fully offline.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-q" aria-expanded="false">
+              <span class="faq-q-icon">
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </span>
+              <span class="faq-q-text">Do I need an account?</span>
+              <span class="faq-chev" aria-hidden="true"></span>
+            </button>
+            <div class="faq-a">
+              <div class="faq-a-inner">
+                <p>No. Download, install, and use. No sign-in of any kind.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-q" aria-expanded="false">
+              <span class="faq-q-icon">
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </span>
+              <span class="faq-q-text">Does Ghost Notes work offline?</span>
+              <span class="faq-chev" aria-hidden="true"></span>
+            </button>
+            <div class="faq-a">
+              <div class="faq-a-inner">
+                <p>
+                  Yes. Ghost Notes runs and saves your notes fully offline, no
+                  internet connection needed.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-q" aria-expanded="false">
+              <span class="faq-q-icon">
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </span>
+              <span class="faq-q-text">How do I install Ghost Notes?</span>
+              <span class="faq-chev" aria-hidden="true"></span>
+            </button>
+            <div class="faq-a">
+              <div class="faq-a-inner">
+                <p>
+                  Download the installer (.dmg for macOS, .exe for Windows) and
+                  run it. No terminal, no build step, no dependencies.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-q" aria-expanded="false">
+              <span class="faq-q-icon">
+                <svg
+                  width="13"
+                  height="13"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </span>
+              <span class="faq-q-text">How do I update the application?</span>
+              <span class="faq-chev" aria-hidden="true"></span>
+            </button>
+            <div class="faq-a">
+              <div class="faq-a-inner">
+                <p>
+                  Download and install the latest release from GitHub Releases.
+                  Your notes are stored separately and are not affected by
+                  updates.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- /faq-container -->
+
+        <!-- Still have questions -->
+        <div class="faq-contact reveal">
+          <div class="faq-contact-icon">
+            <img src="favicon.svg" alt="" width="24" height="24" />
+          </div>
+          <div class="faq-contact-text">
+            <strong>Still have questions?</strong>
+            <span
+              >If you can't find the answer you're looking for, open an issue on
+              GitHub.</span
+            >
+          </div>
+          <a
+            href="#"
+            id="issuesLink"
+            target="_blank"
+            rel="noopener"
+            class="cta-secondary"
+            style="font-size: 13.5px; padding: 9px 16px"
+          >
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
+              />
+            </svg>
+            Open an issue
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ BOTTOM CTA ══════════════════════════════════════════════ -->
+    <section class="callout-section">
+      <div class="wrap">
+        <div class="callout-panel">
+          <div class="callout-text">
+            <h2>Keep your notes.<br />Lose them from the recording.</h2>
+            <p>Free, open source, and local-first. No account required.</p>
+          </div>
+          <div class="callout-actions">
+            <a href="#" id="calloutDownload" class="cta-light">
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"
+                />
+              </svg>
+              <span class="dl-label">Download for Mac</span>
+            </a>
+            <a
+              href="#"
+              id="sourceLink"
+              target="_blank"
+              rel="noopener"
+              class="cta-ghost"
+            >
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
+                />
+              </svg>
+              View on GitHub
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ FOOTER ══════════════════════════════════════════════════ -->
+    <footer class="site-footer">
+      <div class="wrap">
+        <div class="footer-panel">
+          <div class="footer-top">
+            <!-- Brand column -->
+            <div class="footer-brand">
+              <a href="/" class="brand">
+                <img
+                  src="favicon.svg"
+                  alt="Ghost Notes"
+                  width="24"
+                  height="24"
+                />
+                Ghost Notes
+              </a>
+              <p class="footer-brand-desc">
+                Private notes that stay on your screen and out of your screen
+                shares.
+              </p>
+
+              <div class="footer-badges">
+                <span class="footer-badge">
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" />
+                    <path d="M7 11V7a5 5 0 0110 0v4" />
+                  </svg>
+                  100% local
+                </span>
+                <span class="footer-badge">No account</span>
+                <span class="footer-badge">Open source</span>
+              </div>
+
+              <p class="footer-platforms">macOS 12+ · Windows 10+</p>
+
+              <div class="footer-socials">
+                <a
+                  href="#"
+                  id="footGithub"
+                  target="_blank"
+                  rel="noopener"
+                  class="footer-social-link"
+                  aria-label="GitHub"
+                >
+                  <svg
+                    width="15"
+                    height="15"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"
+                    />
+                  </svg>
+                </a>
+                <a
+                  href="#"
+                  id="footTwitter"
+                  target="_blank"
+                  rel="noopener"
+                  class="footer-social-link"
+                  aria-label="Twitter / X"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
+                    />
+                  </svg>
+                </a>
+                <a
+                  href="#"
+                  id="footIssues"
+                  target="_blank"
+                  rel="noopener"
+                  class="footer-social-link"
+                  aria-label="Report an issue"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+            <!-- Nav columns -->
+            <div class="footer-nav">
+              <div>
+                <div class="footer-col-head">Product</div>
+                <div class="footer-col">
+                  <a href="#features">Features</a>
+                  <a href="#how-it-works">How it works</a>
+                  <a href="#manager">Notes Manager</a>
+                  <a href="#shortcuts">Shortcuts</a>
+                  <a href="#" id="footDownload">Download</a>
+                </div>
+              </div>
+              <div>
+                <div class="footer-col-head">Resources</div>
+                <div class="footer-col">
+                  <a href="#faq">FAQ</a>
+                  <a href="#" id="releasesLink" target="_blank" rel="noopener"
+                    >Releases</a
+                  >
+                  <a href="#" id="releasesLink2" target="_blank" rel="noopener"
+                    >Changelog</a
+                  >
+                </div>
+              </div>
+              <div>
+                <div class="footer-col-head">Community</div>
+                <div class="footer-col">
+                  <a href="#" id="footGithub2" target="_blank" rel="noopener"
+                    >GitHub</a
+                  >
+                  <a href="#" id="footIssues2" target="_blank" rel="noopener"
+                    >Report an issue</a
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- /footer-top -->
+
+          <div class="footer-bottom">
+            <p class="footer-copyright">
+              &copy; 2026 Ghost Notes. MIT License.
+            </p>
+            <div class="footer-legal">
+              <a href="#" id="footGithub3" target="_blank" rel="noopener"
+                >Open source</a
+              >
+              <a href="#" id="footIssues3" target="_blank" rel="noopener"
+                >Report an issue</a
+              >
+            </div>
+          </div>
+        </div>
+        <!-- /footer-panel -->
+      </div>
+    </footer>
+
+    <!-- ═══ INSTALL HELP MODAL ═══════════════════════════════════ -->
+    <div class="install-modal-backdrop" id="installModal" hidden>
+      <div class="install-modal">
+        <button
+          class="install-modal-close"
+          id="installModalClose"
+          aria-label="Close"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+
+        <div class="install-modal-header">
+          <img src="favicon.svg" alt="" width="32" height="32" />
+          <h3>Almost there!</h3>
+          <p>
+            Ghost Notes isn't code-signed yet, so your OS may show a warning.<br />Here's
+            how to get past it:
+          </p>
+        </div>
+
+        <!-- Windows tab -->
+        <div class="install-tab" id="installTabWin">
+          <div class="install-tab-badge">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"
+              />
+            </svg>
+            Windows
+          </div>
+          <ol class="install-steps">
+            <li>Run the downloaded <strong>.exe</strong> installer.</li>
+            <li>
+              Windows SmartScreen may show <em>"Windows protected your PC"</em>.
+            </li>
+            <li>Click <strong>"More info"</strong> to reveal the option.</li>
+            <li>Click <strong>"Run anyway"</strong> to proceed.</li>
+          </ol>
+          <div class="install-visual">
+            <!-- <div class="smartscreen-mock"> -->
+            <!-- <div class="smartscreen-icon">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ca8a04" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
                 <line x1="12" y1="9" x2="12" y2="13" />
                 <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
             </div> -->
-          <!-- <div class="smartscreen-text">
+            <!-- <div class="smartscreen-text">
               <strong>Windows protected your PC</strong>
               <span>Microsoft Defender SmartScreen prevented an unrecognized app from starting.</span>
             </div>
             <div class="smartscreen-link">More info</div>
             <div class="smartscreen-btn">Run anyway</div> -->
-          <!-- </div> -->
+            <!-- </div> -->
+          </div>
         </div>
-      </div>
 
-      <!-- macOS tab -->
-      <div class="install-tab" id="installTabMac">
-        <div class="install-tab-badge">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path
-              d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-          </svg>
-          macOS
-        </div>
-        <ol class="install-steps">
-          <li>Open the downloaded <strong>.dmg</strong> and drag Ghost Notes to Applications.</li>
-          <li>On first launch, macOS may say <em>"Ghost Notes can't be opened because Apple cannot check it for
-              malicious software."</em></li>
-          <li>Open <strong>Terminal</strong> and run the command below to allow it:</li>
-        </ol>
-        <div class="install-code">
-          <code id="macCommand">xattr -cr /Applications/Ghost\ Notes.app</code>
-          <button class="install-copy" id="copyMacCmd" title="Copy to clipboard">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round">
-              <rect x="9" y="9" width="13" height="13" rx="2" />
-              <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+        <!-- macOS tab -->
+        <div class="install-tab" id="installTabMac">
+          <div class="install-tab-badge">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"
+              />
             </svg>
+            macOS
+          </div>
+          <ol class="install-steps">
+            <li>
+              Open the downloaded <strong>.dmg</strong> and drag Ghost Notes to
+              Applications.
+            </li>
+            <li>
+              On first launch, macOS may say
+              <em
+                >"Ghost Notes can't be opened because Apple cannot check it for
+                malicious software."</em
+              >
+            </li>
+            <li>
+              Open <strong>Terminal</strong> and run the command below to allow
+              it:
+            </li>
+          </ol>
+          <div class="install-code">
+            <code id="macCommand"
+              >xattr -cr /Applications/Ghost\ Notes.app</code
+            >
+            <button
+              class="install-copy"
+              id="copyMacCmd"
+              title="Copy to clipboard"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="9" y="9" width="13" height="13" rx="2" />
+                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+              </svg>
+            </button>
+          </div>
+          <p class="install-hint">
+            Then open Ghost Notes again, it will launch normally from now on.
+          </p>
+        </div>
+
+        <div class="install-modal-footer">
+          <button class="install-proceed" id="installProceed">
+            Got it, Download now!
           </button>
         </div>
-        <p class="install-hint">Then open Ghost Notes again, it will launch normally from now on.</p>
-      </div>
-
-      <div class="install-modal-footer">
-        <button class="install-proceed" id="installProceed">Got it, Download now!</button>
       </div>
     </div>
-  </div>
 
-  <!-- Motion animation library -->
-  <script src="https://cdn.jsdelivr.net/npm/motion@latest/dist/motion.min.js"></script>
-  <script>
-    if (typeof Motion === 'undefined') {
-      document.documentElement.classList.add('no-motion');
-    }
-  </script>
-  <script src="config.js"></script>
-  <script src="script.js"></script>
-</body>
-
+    <!-- Motion animation library -->
+    <script src="https://cdn.jsdelivr.net/npm/motion@latest/dist/motion.min.js"></script>
+    <script>
+      if (typeof Motion === "undefined") {
+        document.documentElement.classList.add("no-motion");
+      }
+    </script>
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+  </body>
 </html>

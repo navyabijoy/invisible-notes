@@ -39,15 +39,21 @@
   /* Shadows */
   --sh-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
   --sh: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
-  --sh-lg: 0 16px 48px rgba(0, 0, 0, 0.10), 0 4px 16px rgba(0, 0, 0, 0.05);
+  --sh-lg: 0 16px 48px rgba(0, 0, 0, 0.1), 0 4px 16px rgba(0, 0, 0, 0.05);
   --sh-xl: 0 32px 80px rgba(0, 0, 0, 0.12), 0 8px 24px rgba(0, 0, 0, 0.07);
 
   /* Dot texture */
-  --dot-pattern: radial-gradient(circle, rgba(0, 0, 0, 0.07) 1px, transparent 1px);
+  --dot-pattern: radial-gradient(
+    circle,
+    rgba(0, 0, 0, 0.07) 1px,
+    transparent 1px
+  );
   --dot-size: 22px 22px;
 
   /* Font */
-  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --font:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial,
+    sans-serif;
 }
 
 /* ─── RESET ─────────────────────────────────────────────────── */
@@ -171,14 +177,17 @@ h3 {
   padding: 11px 20px;
   border-radius: var(--r-sm);
   letter-spacing: -0.01em;
-  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+  transition:
+    background 0.15s,
+    transform 0.15s,
+    box-shadow 0.15s;
   white-space: nowrap;
 }
 
 .cta-primary:hover {
   background: var(--accent-dk);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(91, 75, 255, 0.30);
+  box-shadow: 0 6px 20px rgba(91, 75, 255, 0.3);
   color: #fff;
 }
 
@@ -194,7 +203,10 @@ h3 {
   border-radius: var(--r-sm);
   border: 1px solid var(--border-2);
   letter-spacing: -0.01em;
-  transition: border-color 0.15s, color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
   white-space: nowrap;
 }
 
@@ -216,7 +228,9 @@ h3 {
   border-radius: var(--r-sm);
   border: 1px solid var(--border);
   letter-spacing: -0.01em;
-  transition: border-color 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
   white-space: nowrap;
 }
 
@@ -279,7 +293,9 @@ kbd {
   color: var(--muted);
   padding: 6px 12px;
   border-radius: var(--r-xs);
-  transition: color 0.15s, background 0.15s;
+  transition:
+    color 0.15s,
+    background 0.15s;
   letter-spacing: -0.01em;
 }
 
@@ -298,7 +314,9 @@ kbd {
   text-decoration: none;
   padding: 6px 12px;
   border-radius: var(--r-xs);
-  transition: color 0.15s, background 0.15s;
+  transition:
+    color 0.15s,
+    background 0.15s;
   letter-spacing: -0.01em;
 }
 
@@ -318,7 +336,9 @@ kbd {
   padding: 8px 16px !important;
   border-radius: var(--r-sm) !important;
   letter-spacing: -0.01em;
-  transition: background 0.15s, box-shadow 0.15s !important;
+  transition:
+    background 0.15s,
+    box-shadow 0.15s !important;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -347,7 +367,9 @@ kbd {
   width: 20px;
   height: 1.5px;
   background: var(--ink);
-  transition: transform 0.2s, opacity 0.2s;
+  transition:
+    transform 0.2s,
+    opacity 0.2s;
   border-radius: 2px;
 }
 
@@ -378,7 +400,9 @@ kbd {
   color: var(--muted);
   padding: 10px 12px;
   border-radius: var(--r-sm);
-  transition: color 0.15s, background 0.15s;
+  transition:
+    color 0.15s,
+    background 0.15s;
 }
 
 .nav-mobile a:hover {
@@ -412,7 +436,7 @@ kbd {
 
 /* Dotted texture inside hero panel */
 .hero-panel::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background-image: var(--dot-pattern);
@@ -530,7 +554,9 @@ kbd {
   margin: 12px 0 4px;
   background: #f0e27f;
   border-radius: 10px;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.16),
+    0 4px 12px rgba(0, 0, 0, 0.08);
   transform: rotate(2deg);
   z-index: 1;
 }
@@ -581,7 +607,7 @@ kbd {
 }
 
 .hero-note-body li::before {
-  content: '•';
+  content: "•";
   position: absolute;
   left: 0;
 }
@@ -755,7 +781,7 @@ kbd {
 }
 
 .split-img.local-ph::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 22%;
   right: 12%;
@@ -931,7 +957,7 @@ kbd {
   font-size: 7.5px;
   color: #713f12;
   line-height: 1.5;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   position: absolute;
   top: 50%;
   left: 50%;
@@ -1177,7 +1203,7 @@ kbd {
 }
 
 .privacy-panel::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background-image: var(--dot-pattern);
@@ -1212,7 +1238,10 @@ kbd {
   border: 1px solid var(--border);
   padding: 9px 16px;
   border-radius: var(--r-sm);
-  transition: border-color 0.15s, color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    box-shadow 0.15s;
   background: var(--surface);
 }
 
@@ -1241,7 +1270,9 @@ kbd {
   border: 1px solid var(--border);
   border-radius: var(--r-sm);
   padding: 14px 16px;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
 .privacy-tag:hover {
@@ -1312,17 +1343,17 @@ kbd {
   color: var(--muted);
 }
 
-.shortcut-head>div,
-.shortcut-body>div {
+.shortcut-head > div,
+.shortcut-body > div {
   padding: 13px 20px;
 }
 
-.shortcut-head>div:not(:last-child),
-.shortcut-body>div:not(:last-child) {
+.shortcut-head > div:not(:last-child),
+.shortcut-body > div:not(:last-child) {
   border-right: 1px solid var(--border);
 }
 
-.shortcut-body>div:first-child {
+.shortcut-body > div:first-child {
   font-weight: 500;
   color: var(--ink-2);
 }
@@ -1430,11 +1461,13 @@ kbd {
 
 .faq-chev::before,
 .faq-chev::after {
-  content: '';
+  content: "";
   position: absolute;
   background: currentColor;
   border-radius: 2px;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
 }
 
 .faq-chev::before {
@@ -1552,22 +1585,30 @@ kbd {
 }
 
 .callout-panel::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-image: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.045) 1px,
+    transparent 1px
+  );
   background-size: var(--dot-size);
   pointer-events: none;
 }
 
 .callout-panel::after {
-  content: '';
+  content: "";
   position: absolute;
   top: -80px;
   right: -80px;
   width: 320px;
   height: 320px;
-  background: radial-gradient(circle, rgba(91, 75, 255, 0.25) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(91, 75, 255, 0.25) 0%,
+    transparent 70%
+  );
   pointer-events: none;
 }
 
@@ -1610,7 +1651,9 @@ kbd {
   padding: 14px 28px;
   border-radius: 14px;
   letter-spacing: -0.01em;
-  transition: background 0.15s, transform 0.15s;
+  transition:
+    background 0.15s,
+    transform 0.15s;
   white-space: nowrap;
 }
 
@@ -1624,7 +1667,13 @@ kbd {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.0) 100%), rgba(25, 25, 25, 0.6);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0) 100%
+    ),
+    rgba(25, 25, 25, 0.6);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   color: #ffffff;
@@ -1634,14 +1683,25 @@ kbd {
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-top: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   letter-spacing: -0.01em;
-  transition: background 0.15s, border-top-color 0.15s, transform 0.15s;
+  transition:
+    background 0.15s,
+    border-top-color 0.15s,
+    transform 0.15s;
   white-space: nowrap;
 }
 
 .cta-ghost:hover {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.0) 100%), rgba(35, 35, 35, 0.7);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0) 100%
+    ),
+    rgba(35, 35, 35, 0.7);
   border-top-color: rgba(255, 255, 255, 0.5);
   transform: translateY(-1px);
 }
@@ -1663,7 +1723,7 @@ kbd {
 }
 
 .footer-panel::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   background-image: var(--dot-pattern);
@@ -1744,7 +1804,10 @@ kbd {
   align-items: center;
   justify-content: center;
   color: var(--muted);
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s,
+    background 0.15s;
 }
 
 .footer-social-link:hover {
@@ -2108,7 +2171,6 @@ body.os-win #dlAlt .dl-icon-mac {
   display: inline-flex;
 }
 
-
 /* ═══ INSTALL HELP MODAL ════════════════════════════════════════ */
 .install-modal-backdrop {
   position: fixed;
@@ -2171,7 +2233,9 @@ body.os-win #dlAlt .dl-icon-mac {
   color: var(--muted);
   padding: 4px;
   border-radius: 6px;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .install-modal-close:hover {
@@ -2315,7 +2379,7 @@ body.os-win #dlAlt .dl-icon-mac {
 
 .install-code code {
   flex: 1;
-  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
   font-size: 13px;
   color: #e2e8f0;
   white-space: nowrap;
@@ -2329,7 +2393,10 @@ body.os-win #dlAlt .dl-icon-mac {
   padding: 6px;
   cursor: pointer;
   color: rgba(255, 255, 255, 0.5);
-  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
 }
 
 .install-copy:hover {
@@ -2366,7 +2433,9 @@ body.os-win #dlAlt .dl-icon-mac {
   border: none;
   border-radius: var(--r-sm);
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.15s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease;
   width: 100%;
 }
 

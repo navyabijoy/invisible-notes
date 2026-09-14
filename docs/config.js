@@ -4,8 +4,14 @@
 window.GHOST_NOTES_CONFIG = {
   DOMAIN: "ghostnotes.navyabijoy.tech",
   REPO: "navyabijoy/invisible-notes",
-  get REPO_URL() { return `https://github.com/${this.REPO}`; },
-  get RELEASES_URL() { return `https://github.com/${this.REPO}/releases/latest`; },
-  get ISSUES_URL() { return `https://github.com/${this.REPO}/issues`; },
+  get REPO_URL() {
+    return `https://github.com/${this.REPO}`;
+  },
+  get RELEASES_URL() {
+    return `https://github.com/${this.REPO}/releases/latest`;
+  },
+  get ISSUES_URL() {
+    return `https://github.com/${this.REPO}/issues`;
+  },
   TWITTER_URL: "https://twitter.com/navyabijoy",
 };

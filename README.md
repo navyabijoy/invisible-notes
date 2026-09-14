@@ -60,12 +60,12 @@ Each note remembers which display it was on. If a monitor is disconnected, or a 
 
 Ghost Notes is built to work on both macOS and Windows, but a couple of OS-level behaviors are genuinely not identical — documented here rather than silently assumed:
 
-| Behavior | macOS | Windows |
-|---|---|---|
-| Screen-capture exclusion | Reliable across QuickTime, native recording, Zoom/Meet/Teams, OBS | Requires Windows 10 build 19041 (May 2020 Update) or later. On older Windows builds, notes may be visible to screen recordings — this is an OS limitation, not a bug. |
-| Visible over fullscreen apps you're sharing | Yes (`visibleOnFullScreenSpaces`) | No native equivalent — Windows has no per-app virtual-desktop concept like macOS Spaces. Always-on-top still applies otherwise. |
-| Tray icon | Adaptive light/dark menu bar icon | Standard system tray icon |
-| Click-through, drag, resize, multi-monitor, DPI scaling | Cross-platform via Electron APIs | Same |
+| Behavior                                                | macOS                                                             | Windows                                                                                                                                                               |
+| ------------------------------------------------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Screen-capture exclusion                                | Reliable across QuickTime, native recording, Zoom/Meet/Teams, OBS | Requires Windows 10 build 19041 (May 2020 Update) or later. On older Windows builds, notes may be visible to screen recordings — this is an OS limitation, not a bug. |
+| Visible over fullscreen apps you're sharing             | Yes (`visibleOnFullScreenSpaces`)                                 | No native equivalent — Windows has no per-app virtual-desktop concept like macOS Spaces. Always-on-top still applies otherwise.                                       |
+| Tray icon                                               | Adaptive light/dark menu bar icon                                 | Standard system tray icon                                                                                                                                             |
+| Click-through, drag, resize, multi-monitor, DPI scaling | Cross-platform via Electron APIs                                  | Same                                                                                                                                                                  |
 
 If you hit different behavior on Windows than described here, please open an issue with your Windows build number.
 

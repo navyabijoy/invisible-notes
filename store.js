@@ -1,49 +1,88 @@
-// Persistence layer: versioned, atomic-write JSON store for note records.
-// A "record" is the durable note (id, content, position, visible flag) —
-// independent of whether a BrowserWindow currently exists for it.
-const fs = require('fs');
-const path = require('path');
+// Versioned JSON store for note records, independent of open windows.
+const fs = require("fs");
+const path = require("path");
 
 const STORE_VERSION = 6;
 
-// The workspace every migrated note lands in. The id is fixed so migrations
-// have a stable target and so the "where do orphaned notes go" fallback has
-// something to prefer.
-//
-// It is NOT permanent: any workspace can be deleted as long as it is not the
-// last one, this one included. Someone who organises into "Work" and
-// "Personal" should not be stuck with an unused "Default" forever. The
-// invariant that actually holds is that at least one workspace always exists,
-// so pickFallbackWorkspace() always has a destination.
-const DEFAULT_WORKSPACE_ID = 'ws-default';
-const DEFAULT_WORKSPACE_NAME = 'Default';
+const {
+  DEFAULT_NOTE_WIDTH,
+  DEFAULT_NOTE_HEIGHT,
+  MIN_NOTE_WIDTH,
+  MIN_NOTE_HEIGHT,
+} = require("./note/noteSize");
+
+// Stable id used when migrating notes; any workspace can still be deleted except the last one.
+const DEFAULT_WORKSPACE_ID = "ws-default";
+const DEFAULT_WORKSPACE_NAME = "Default";
 const MAX_WORKSPACE_NAME_LENGTH = 40;
 
+const THEME_MODES = ["light", "dark", "system"];
+const DEFAULT_THEME = "system";
+const ACCENT_IDS = ["violet", "blue", "green", "orange", "pink"];
+const DEFAULT_ACCENT = "violet";
+
+// List-scope sentinel for every note; new notes still land in the active workspace.
+const ALL_NOTES_SCOPE = "__all__";
+
+function sanitizeTheme(input) {
+  return THEME_MODES.includes(input) ? input : DEFAULT_THEME;
+}
+
+function sanitizeAccent(input) {
+  return ACCENT_IDS.includes(input) ? input : DEFAULT_ACCENT;
+}
+
+function sanitizeListScope(value, workspaceIds, activeId) {
+  if (value === ALL_NOTES_SCOPE) {
+    return workspaceIds.size > 1 ? ALL_NOTES_SCOPE : activeId;
+  }
+  if (typeof value === "string" && workspaceIds.has(value)) return value;
+  return activeId;
+}
+
+function sanitizeShortcutOverrides(input) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return {};
+  const out = {};
+  for (const [id, accelerator] of Object.entries(input)) {
+    if (typeof id !== "string" || typeof accelerator !== "string") continue;
+    const clean = accelerator.trim();
+    if (clean) out[id] = clean;
+  }
+  return out;
+}
+
 function nextId() {
-  return 'note-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6);
+  return (
+    "note-" +
+    Date.now().toString(36) +
+    "-" +
+    Math.random().toString(36).slice(2, 6)
+  );
 }
 
 function nextWorkspaceId() {
-  return 'ws-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6);
+  return (
+    "ws-" +
+    Date.now().toString(36) +
+    "-" +
+    Math.random().toString(36).slice(2, 6)
+  );
 }
 
-// Workspace names are shown in a tray menu, where a newline or an
-// over-long string would break the layout, so normalize at the boundary.
 function sanitizeWorkspaceName(input) {
-  if (typeof input !== 'string') return '';
-  return input.replace(/[\r\n]+/g, ' ').trim().slice(0, MAX_WORKSPACE_NAME_LENGTH);
+  if (typeof input !== "string") return "";
+  return input
+    .replace(/[\r\n]+/g, " ")
+    .trim()
+    .slice(0, MAX_WORKSPACE_NAME_LENGTH);
 }
 
 function defaultWorkspace(overrides = {}) {
-  // A blank or whitespace-only id is not a usable identifier, so it is
-  // replaced rather than stored. Notes still pointing at the old value are
-  // reattached by normalizeWorkspaces, which reassigns any workspaceId that
-  // does not match a workspace that exists.
-  const id = typeof overrides.id === 'string' ? overrides.id.trim() : '';
+  const id = typeof overrides.id === "string" ? overrides.id.trim() : "";
   return {
     id: id || nextWorkspaceId(),
-    name: sanitizeWorkspaceName(overrides.name) || 'Untitled workspace',
-    createdAt: overrides.createdAt || Date.now()
+    name: sanitizeWorkspaceName(overrides.name) || "Untitled workspace",
+    createdAt: overrides.createdAt || Date.now(),
   };
 }
 
@@ -51,74 +90,63 @@ function defaultRecord(overrides = {}) {
   const now = overrides.createdAt || Date.now();
   return {
     id: overrides.id || nextId(),
-    title: overrides.title || '',
-    text: overrides.text || '',
-    color: overrides.color || 'yellow',
+    title: overrides.title || "",
+    text: overrides.text || "",
+    color: overrides.color || "yellow",
     x: overrides.x,
     y: overrides.y,
-    width: overrides.width || 300,
-    height: overrides.height || 220,
+    width: overrides.width || DEFAULT_NOTE_WIDTH,
+    height: overrides.height || DEFAULT_NOTE_HEIGHT,
     displayId: overrides.displayId ?? null,
-    opacity: typeof overrides.opacity === 'number' ? overrides.opacity : 0.85,
+    opacity: typeof overrides.opacity === "number" ? overrides.opacity : 0.85,
     fontSize: overrides.fontSize || 15,
-    // Per-note monospace toggle for code walkthroughs (issue #7).
     monospace: !!overrides.monospace,
-    // Which workspace this note belongs to (issue #8). Independent of
-    // `visible`. See the note on effective visibility below.
     workspaceId: overrides.workspaceId || DEFAULT_WORKSPACE_ID,
     ghost: !!overrides.ghost,
     visible: overrides.visible !== undefined ? !!overrides.visible : true,
-    // Pinned = always-on-top, survives switching focus to another app.
-    // Unpinned = a normal window that can be covered by whatever's focused.
     pinned: overrides.pinned !== undefined ? !!overrides.pinned : true,
     createdAt: now,
-    updatedAt: overrides.updatedAt || now
+    updatedAt: overrides.updatedAt || now,
   };
 }
 
-// Where notes go when their own workspace is missing or is being removed.
-// Prefers the default workspace when it is still present, otherwise the
-// first remaining one. Callers use this to name the real destination rather
-// than assuming it is "Default", which is wrong once that workspace has been
-// renamed or deleted. Returns null only for an empty list.
+// Destination for notes whose workspace is missing or being removed.
 function pickFallbackWorkspace(workspaces, excludeId) {
-  const remaining = excludeId === undefined ? workspaces : workspaces.filter((w) => w.id !== excludeId);
-  return remaining.find((w) => w.id === DEFAULT_WORKSPACE_ID) || remaining[0] || null;
+  const remaining =
+    excludeId === undefined
+      ? workspaces
+      : workspaces.filter((w) => w.id !== excludeId);
+  return (
+    remaining.find((w) => w.id === DEFAULT_WORKSPACE_ID) || remaining[0] || null
+  );
 }
 
 function emptyStore() {
   const workspace = defaultWorkspace({
     id: DEFAULT_WORKSPACE_ID,
-    name: DEFAULT_WORKSPACE_NAME
+    name: DEFAULT_WORKSPACE_NAME,
   });
   return {
     version: STORE_VERSION,
-    settings: { activeWorkspace: workspace.id, shortcuts: {} },
+    settings: {
+      activeWorkspace: workspace.id,
+      listScope: workspace.id,
+      theme: DEFAULT_THEME,
+      accent: DEFAULT_ACCENT,
+      sidebarOpen: false,
+      shortcuts: {},
+    },
     workspaces: [workspace],
-    notes: []
+    notes: [],
   };
 }
 
-// Guarantees the workspace invariants the rest of the app relies on:
-//   1. at least one workspace always exists,
-//   2. every note points at a workspace that exists,
-//   3. settings.activeWorkspace points at a workspace that exists.
-// Applied to every load, not just migrations, so a hand-edited or
-// partially-written file can't leave notes stranded in a workspace that
-// isn't in the dropdown, which would make them unreachable from the UI.
+// Keep at least one workspace, valid membership, and a valid active/list scope.
 function normalizeWorkspaces(data) {
-  // Drop malformed entries and duplicate ids. A duplicate id would put two
-  // identical-looking options in the dropdown while only one of them could
-  // ever be selected, and would make note membership ambiguous.
-  //
-  // Normalize before deduping, so the check runs against the id actually
-  // being stored. Deduping on the raw value would treat two entries with a
-  // blank id as the same workspace and drop the second, even though
-  // defaultWorkspace gives each of them a distinct generated id.
   const seenIds = new Set();
   let workspaces = [];
   for (const entry of Array.isArray(data.workspaces) ? data.workspaces : []) {
-    if (!entry || typeof entry !== 'object') continue;
+    if (!entry || typeof entry !== "object") continue;
     const workspace = defaultWorkspace(entry);
     if (seenIds.has(workspace.id)) continue;
     seenIds.add(workspace.id);
@@ -126,7 +154,12 @@ function normalizeWorkspaces(data) {
   }
 
   if (workspaces.length === 0) {
-    workspaces = [defaultWorkspace({ id: DEFAULT_WORKSPACE_ID, name: DEFAULT_WORKSPACE_NAME })];
+    workspaces = [
+      defaultWorkspace({
+        id: DEFAULT_WORKSPACE_ID,
+        name: DEFAULT_WORKSPACE_NAME,
+      }),
+    ];
   }
 
   const ids = new Set(workspaces.map((w) => w.id));
@@ -134,104 +167,93 @@ function normalizeWorkspaces(data) {
 
   const notes = data.notes.map((n) => ({
     ...n,
-    workspaceId: ids.has(n.workspaceId) ? n.workspaceId : fallbackId
+    workspaceId: ids.has(n.workspaceId) ? n.workspaceId : fallbackId,
   }));
 
   const requested = data.settings?.activeWorkspace;
+  const activeId = ids.has(requested) ? requested : fallbackId;
   return {
     version: STORE_VERSION,
-    // Spread first so future app-level settings (theme in #2, custom
-    // shortcuts in #5) survive a workspace migration untouched.
-    settings: { ...data.settings, activeWorkspace: ids.has(requested) ? requested : fallbackId },
+    settings: {
+      ...data.settings,
+      activeWorkspace: activeId,
+      listScope: sanitizeListScope(data.settings?.listScope, ids, activeId),
+      theme: sanitizeTheme(data.settings?.theme),
+      accent: sanitizeAccent(data.settings?.accent),
+      sidebarOpen:
+        typeof data.settings?.sidebarOpen === "boolean"
+          ? data.settings.sidebarOpen
+          : false,
+      shortcuts: sanitizeShortcutOverrides(data.settings?.shortcuts),
+    },
     workspaces,
-    notes
+    notes,
   };
 }
 
-// v1 files were `{ notes: [...] }` with no `version` field and no `visible`/`title`.
-// v2 files have a version field but no `pinned`.
-// v3 files have pinned but no `monospace`.
-// v4 files have monospace but no workspaces.
-// v5 is the `images` schema from #9, accepted here as a migration source too,
-// so this change and that one are independent of merge order.
+// Upgrade older notes.json schemas to the current store version.
 function migrate(data) {
-  if (!data || typeof data !== 'object') return emptyStore();
+  if (!data || typeof data !== "object") return emptyStore();
   if (!Array.isArray(data.notes)) return emptyStore();
 
-  // Drop entries that are not objects before anything reads fields off them.
-  // A hand-edited or partially written file can hold a null or a bare number
-  // in the array, and every branch below (and normalizeWorkspaces after it)
-  // dereferences each entry. Reading `n.monospace` off a null throws, and the
-  // throw escapes _load's JSON.parse try block, so it would surface as a
-  // crash on launch rather than the corrupt-file recovery path.
-  const sourceNotes = data.notes.filter((n) => n && typeof n === 'object');
+  const sourceNotes = data.notes.filter((n) => n && typeof n === "object");
 
   let notes;
   if (!data.version) {
-    // v1 -> current: add visible/title/displayId/pinned/monospace/timestamps.
-    notes = sourceNotes.map((n) => defaultRecord({ ...n, visible: true, pinned: true }));
+    notes = sourceNotes.map((n) =>
+      defaultRecord({ ...n, visible: true, pinned: true }),
+    );
   } else if (data.version === 2) {
-    // v2 -> current: backfill pinned:true so existing notes keep today's
-    // always-on-top behavior unchanged. Monospace defaults to off unless
-    // the record already has it set.
     notes = sourceNotes.map((n) => ({
       ...n,
       pinned: n.pinned !== undefined ? !!n.pinned : true,
-      monospace: !!n.monospace
+      monospace: !!n.monospace,
     }));
   } else if (data.version === 3 || data.version === 4 || data.version === 5) {
-    // v3 -> v4: existing notes stay proportional unless the user toggles {}.
-    // v4/v5 -> v6: the workspace backfill below is the only change; spreading
-    // keeps any fields this version doesn't know about (e.g. v5 `images`).
     notes = sourceNotes.map((n) => ({ ...n, monospace: !!n.monospace }));
   } else {
     notes = sourceNotes;
   }
 
-  // Every pre-v6 file predates workspaces, so normalizeWorkspaces drops all
-  // of its notes into a single "Default" workspace and makes it active, so an
-  // upgrading user sees exactly the notes they saw before.
   return normalizeWorkspaces({ ...data, notes });
 }
 
-// Convert a parsed backup file (any schema version this app has ever
-// written) into a clean list of current-schema records. Backups are
-// untrusted input — hand-edited, from another machine, or an older schema —
-// so every field the UI relies on is re-coerced to a sane type, unknown
-// fields are dropped by defaultRecord(), and duplicate ids are skipped.
-// Returns null when the payload is not a notes file at all.
+// Coerce a backup payload into current-schema records, or null if it is not a notes file.
 function normalizeImport(data) {
-  if (!data || typeof data !== 'object' || !Array.isArray(data.notes)) return null;
-  // An empty array is intentionally importable (so "Replace" can clear notes),
-  // but that means any random JSON with notes: [] would otherwise pass. Exports
-  // always write the app marker and a numeric version, so require one of those
-  // when there is nothing else to look at.
-  if (data.notes.length === 0 && data.app !== 'ghost-notes' && !Number.isFinite(data.version)) return null;
+  if (!data || typeof data !== "object" || !Array.isArray(data.notes))
+    return null;
+  if (
+    data.notes.length === 0 &&
+    data.app !== "ghost-notes" &&
+    !Number.isFinite(data.version)
+  )
+    return null;
   const seen = new Set();
   const notes = [];
   for (const entry of migrate(data).notes) {
-    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
-    // defaultRecord() uses overrides.createdAt || Date.now(), so a valid epoch
-    // timestamp of 0 would be overwritten before the checks below run. Capture
-    // the raw values and restore them when they are actually finite.
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) continue;
     const rawCreatedAt = entry.createdAt;
     const rawUpdatedAt = entry.updatedAt;
     const record = defaultRecord(entry);
     if (Number.isFinite(rawCreatedAt)) record.createdAt = rawCreatedAt;
     if (Number.isFinite(rawUpdatedAt)) record.updatedAt = rawUpdatedAt;
-    if (typeof record.id !== 'string' || !record.id) record.id = nextId();
+    if (typeof record.id !== "string" || !record.id) record.id = nextId();
     if (seen.has(record.id)) continue;
     seen.add(record.id);
-    if (typeof record.title !== 'string') record.title = '';
-    if (typeof record.text !== 'string') record.text = '';
-    if (typeof record.color !== 'string') record.color = 'yellow';
-    // typeof alone lets NaN/Infinity through; only finite numbers are valid
-    // for sizes, positions and timestamps. width/height/opacity also get
-    // bounds so a bad backup can't produce an unusable window.
-    if (!Number.isFinite(record.opacity) || record.opacity <= 0 || record.opacity > 1) record.opacity = 0.85;
+    if (typeof record.title !== "string") record.title = "";
+    if (typeof record.text !== "string") record.text = "";
+    if (typeof record.color !== "string") record.color = "yellow";
+    if (
+      !Number.isFinite(record.opacity) ||
+      record.opacity <= 0 ||
+      record.opacity > 1
+    )
+      record.opacity = 0.85;
     if (!Number.isFinite(record.fontSize)) record.fontSize = 15;
-    if (!Number.isFinite(record.width) || record.width < 160) record.width = 300;
-    if (!Number.isFinite(record.height) || record.height < 120) record.height = 220;
+    if (!Number.isFinite(record.width)) record.width = DEFAULT_NOTE_WIDTH;
+    else if (record.width < MIN_NOTE_WIDTH) record.width = MIN_NOTE_WIDTH;
+    if (!Number.isFinite(record.height)) record.height = DEFAULT_NOTE_HEIGHT;
+    else if (record.height < MIN_NOTE_HEIGHT) record.height = MIN_NOTE_HEIGHT;
     if (!Number.isFinite(record.x)) record.x = undefined;
     if (!Number.isFinite(record.y)) record.y = undefined;
     if (!Number.isFinite(record.createdAt)) record.createdAt = Date.now();
@@ -242,19 +264,10 @@ function normalizeImport(data) {
 }
 
 class NoteStore {
-  // onCorrupted(backupPath) and onWriteError(error) are optional hooks so the
-  // caller (main.js) can surface a friendly, non-technical notice — this
-  // module has no Electron dependency and never shows UI itself.
-  //
-  // `codec` is an optional `{ encrypt(string) -> Buffer, decrypt(Buffer) -> string }`
-  // pair that encrypts the file's bytes at rest (typically Electron's
-  // safeStorage). When provided, writes are encrypted and reads are decrypted.
-  // When omitted (e.g. OS-level encryption unavailable), notes are stored as
-  // plaintext — matching the original behavior.
   constructor(userDataPath, { onCorrupted, onWriteError, codec } = {}) {
-    this.filePath = path.join(userDataPath, 'notes.json');
-    this.tmpPath = this.filePath + '.tmp';
-    this.backupPath = this.filePath + '.corrupt';
+    this.filePath = path.join(userDataPath, "notes.json");
+    this.tmpPath = this.filePath + ".tmp";
+    this.backupPath = this.filePath + ".corrupt";
     this.onCorrupted = onCorrupted;
     this.onWriteError = onWriteError;
     this.codec = codec || null;
@@ -262,23 +275,18 @@ class NoteStore {
     this.data = data;
     this._saveTimer = null;
     if (migrated && this.codec) {
-      // A legacy plaintext file was loaded while encryption is now enabled —
-      // re-encrypt it immediately so plaintext doesn't linger on disk.
       this._writeNow();
     }
   }
 
-  // Returns { data, migrated } where `migrated` indicates a legacy plaintext
-  // file was found while a codec is enabled (and should be re-encrypted).
   _load() {
     let raw;
     try {
-      raw = fs.readFileSync(this.filePath); // Buffer
+      raw = fs.readFileSync(this.filePath);
     } catch (_) {
       return { data: emptyStore(), migrated: false };
     }
 
-    // 1) Encryption enabled: try to decrypt the file first.
     if (this.codec) {
       try {
         const plain = this.codec.decrypt(raw);
@@ -290,15 +298,13 @@ class NoteStore {
           return { data: this._parseAndMigrate(parsed, raw), migrated: false };
         }
       } catch (_) {
-        // Decryption failed — the file is probably a legacy plaintext file
-        // saved before encryption was enabled. Fall through and migrate it.
+        // Fall through to plaintext for files saved before encryption.
       }
     }
 
-    // 2) Legacy plaintext JSON (or an unreadable/corrupted file).
     let parsed = null;
     try {
-      parsed = JSON.parse(raw.toString('utf8'));
+      parsed = JSON.parse(raw.toString("utf8"));
     } catch (_) {
       return { data: this._corrupt(raw), migrated: false };
     }
@@ -307,22 +313,21 @@ class NoteStore {
 
   _parseAndMigrate(parsed, raw) {
     if (!parsed || parsed.version !== STORE_VERSION) {
-      // About to run a schema migration — snapshot the pre-migration file
-      // first so a bug in migrate() can never be the only copy of the data.
       try {
-        fs.writeFileSync(this.filePath + `.pre-migration-v${(parsed && parsed.version) || 1}`, raw);
+        fs.writeFileSync(
+          this.filePath + `.pre-migration-v${(parsed && parsed.version) || 1}`,
+          raw,
+        );
       } catch (_) {}
     }
     return migrate(parsed);
   }
 
   _corrupt(raw) {
-    // Preserve the bad file for inspection, never destroy it silently by
-    // overwriting; start fresh so the app still boots.
     try {
       fs.writeFileSync(this.backupPath, raw);
     } catch (_) {}
-    console.error('notes.json was corrupted, backed up to', this.backupPath);
+    console.error("notes.json was corrupted, backed up to", this.backupPath);
     if (this.onCorrupted) this.onCorrupted(this.backupPath);
     return emptyStore();
   }
@@ -330,21 +335,19 @@ class NoteStore {
   _writeNow() {
     let out;
     if (this.codec) {
-      // safeStorage.encryptString returns a Buffer; write it as-is.
       out = this.codec.encrypt(JSON.stringify(this.data));
     } else {
-      out = Buffer.from(JSON.stringify(this.data, null, 2), 'utf8');
+      out = Buffer.from(JSON.stringify(this.data, null, 2), "utf8");
     }
     try {
       fs.writeFileSync(this.tmpPath, out);
       fs.renameSync(this.tmpPath, this.filePath);
     } catch (e) {
-      console.error('Failed to save notes:', e);
+      console.error("Failed to save notes:", e);
       if (this.onWriteError) this.onWriteError(e);
     }
   }
 
-  // Debounced save so rapid move/resize/typing events don't hammer disk.
   save() {
     if (this._saveTimer) clearTimeout(this._saveTimer);
     this._saveTimer = setTimeout(() => {
@@ -353,7 +356,6 @@ class NoteStore {
     }, 250);
   }
 
-  // Flush pending debounced save immediately (call before quit).
   flush() {
     if (this._saveTimer) {
       clearTimeout(this._saveTimer);
@@ -371,11 +373,9 @@ class NoteStore {
   }
 
   create(overrides = {}) {
-    // A new note belongs to whatever workspace is on screen right now,
-    // unless the caller is explicit about it.
     const record = defaultRecord({
       workspaceId: this.activeWorkspaceId(),
-      ...overrides
+      ...overrides,
     });
     this.data.notes.push(record);
     this.save();
@@ -398,29 +398,22 @@ class NoteStore {
     return true;
   }
 
-  // ---------- Workspaces (issue #8) ----------
-  //
-  // Workspace membership and `visible` are deliberately independent.
-  // `visible` stays the user's per-note choice *within* its workspace, so
-  // switching away and back restores exactly the notes that were open. It
-  // is never rewritten as a side effect of changing workspace. Callers
-  // decide what to render with:
-  //
-  //     shown = note.visible && note.workspaceId === activeWorkspaceId()
-
   settings() {
     return this.data.settings;
   }
 
-  // ---------- Shortcut Overrides (issue #5) ----------
   getShortcutOverrides() {
     return this.data.settings?.shortcuts || {};
   }
 
   setShortcutOverride(id, accelerator) {
-    if (!this.data.settings) this.data.settings = {};
+    if (typeof id !== "string" || typeof accelerator !== "string") {
+      return this.getShortcutOverrides();
+    }
+    const clean = accelerator.trim();
+    if (!clean) return this.getShortcutOverrides();
     if (!this.data.settings.shortcuts) this.data.settings.shortcuts = {};
-    this.data.settings.shortcuts[id] = accelerator;
+    this.data.settings.shortcuts[id] = clean;
     this.save();
     return this.data.settings.shortcuts;
   }
@@ -431,6 +424,30 @@ class NoteStore {
       this.save();
     }
     return this.data.settings?.shortcuts || {};
+  }
+
+  getTheme() {
+    return sanitizeTheme(this.data.settings.theme);
+  }
+
+  setTheme(mode) {
+    const clean = sanitizeTheme(mode);
+    if (this.data.settings.theme === clean) return clean;
+    this.data.settings.theme = clean;
+    this.save();
+    return clean;
+  }
+
+  getAccent() {
+    return sanitizeAccent(this.data.settings.accent);
+  }
+
+  setAccent(id) {
+    const clean = sanitizeAccent(id);
+    if (this.data.settings.accent === clean) return clean;
+    this.data.settings.accent = clean;
+    this.save();
+    return clean;
   }
 
   workspaces() {
@@ -452,8 +469,32 @@ class NoteStore {
   setActiveWorkspace(id) {
     if (!this.getWorkspace(id)) return null;
     this.data.settings.activeWorkspace = id;
+    this.data.settings.listScope = id;
     this.save();
     return id;
+  }
+
+  listScope() {
+    return this.data.settings.listScope || this.activeWorkspaceId();
+  }
+
+  setListScope(id) {
+    const ids = new Set(this.data.workspaces.map((w) => w.id));
+    const clean = sanitizeListScope(id, ids, this.activeWorkspaceId());
+    if (this.data.settings.listScope === clean) return clean;
+    this.data.settings.listScope = clean;
+    this.save();
+    return clean;
+  }
+
+  isSidebarOpen() {
+    return !!this.data.settings.sidebarOpen;
+  }
+
+  setSidebarOpen(value) {
+    if (this.data.settings.sidebarOpen === !!value) return;
+    this.data.settings.sidebarOpen = !!value;
+    this.save();
   }
 
   createWorkspace(name) {
@@ -467,24 +508,17 @@ class NoteStore {
     const workspace = this.getWorkspace(id);
     if (!workspace) return null;
     const clean = sanitizeWorkspaceName(name);
-    if (!clean) return workspace; // ignore a blank rename rather than wiping the label
+    if (!clean) return workspace;
     workspace.name = clean;
     this.save();
     return workspace;
   }
 
-  // Where the notes of `id` would go if it were deleted. Exposed so the
-  // confirmation dialog can name the real destination instead of assuming
-  // it is called "Default". Returns null when `id` is the last workspace.
   fallbackWorkspaceFor(id) {
     if (this.data.workspaces.length <= 1) return null;
     return pickFallbackWorkspace(this.data.workspaces, id);
   }
 
-  // Deleting a workspace never deletes notes. They are reassigned to the
-  // fallback workspace. Refuses to remove the last remaining workspace so
-  // the "at least one workspace" invariant always holds.
-  // Returns { movedCount, fallbackId } on success, or null if refused.
   removeWorkspace(id) {
     if (this.data.workspaces.length <= 1) return null;
     const idx = this.data.workspaces.findIndex((w) => w.id === id);
@@ -504,6 +538,12 @@ class NoteStore {
     if (this.data.settings.activeWorkspace === id) {
       this.data.settings.activeWorkspace = fallback.id;
     }
+    if (
+      this.data.settings.listScope === id ||
+      this.data.workspaces.length <= 1
+    ) {
+      this.data.settings.listScope = this.data.settings.activeWorkspace;
+    }
     this.save();
     return { movedCount, fallbackId: fallback.id };
   }
@@ -517,11 +557,7 @@ class NoteStore {
     return record;
   }
 
-  // Bulk swap of the whole notes array — used by import (merge or replace),
-  // where callers have already normalized the records. One save instead of N.
   replaceAll(records) {
-    // Replace only the notes, preserving settings and workspaces so the
-    // workspace invariants (active workspace, membership) survive an import.
     this.data = { ...this.data, notes: records };
     this.save();
   }
@@ -533,5 +569,12 @@ module.exports = {
   normalizeImport,
   STORE_VERSION,
   DEFAULT_WORKSPACE_ID,
-  sanitizeWorkspaceName
+  sanitizeWorkspaceName,
+  sanitizeTheme,
+  sanitizeAccent,
+  THEME_MODES,
+  ACCENT_IDS,
+  DEFAULT_THEME,
+  DEFAULT_ACCENT,
+  ALL_NOTES_SCOPE,
 };

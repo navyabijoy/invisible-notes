@@ -5,7 +5,8 @@ node_modules/
 dist/
 out/
 build/Release/
-
+*.bak
+*.js.bak
 # Logs
 *.log
 npm-debug.log*

@@ -13,8 +13,8 @@ Closes #<!-- issue number -->
 
 <!-- Briefly list what you changed. -->
 
-- 
-- 
+-
+-
 
 ## Testing
 
@@ -24,9 +24,7 @@ Closes #<!-- issue number -->
 - [ ] Tested on Windows
 - [ ] Tested on Linux (if applicable)
 
-**Steps to reproduce / verify:**
-1. 
-2. 
+**Steps to reproduce / verify:** 1. 2.
 
 ## Screenshots / Recordings (if applicable)
 
