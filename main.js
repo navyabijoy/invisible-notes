@@ -461,11 +461,23 @@ function buildTrayIcon() {
   );
 }
 
+function htmlToText(html) {
+  return html
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<\/(p|div|h[1-6]|li|ul|ol|blockquote|pre)>/gi, " ")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&");
+}
+
 function noteLabel(record) {
-  const snippet = (record.title || record.text || "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 30);
+  const raw = record.title || record.text || "";
+  const plain = record.rich ? htmlToText(raw) : raw;
+  const snippet = plain.replace(/\s+/g, " ").trim().slice(0, 30);
   return snippet || "Untitled note";
 }
 

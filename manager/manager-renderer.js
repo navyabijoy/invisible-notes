@@ -154,8 +154,44 @@ function label(note) {
   return (note.title || "").trim();
 }
 
+function htmlToText(html) {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  let out = "";
+  const walk = (node) => {
+    if (node.nodeType === 3) {
+      out += node.nodeValue;
+      return;
+    }
+    if (node.nodeType !== 1) return;
+    const tag = node.tagName;
+    if (tag === "BR") {
+      out += "\n";
+      return;
+    }
+    if (tag === "LI") {
+      const list = node.parentElement;
+      if (list && list.tagName === "OL") {
+        out += `${Array.prototype.indexOf.call(list.children, node) + 1}. `;
+      } else {
+        out += "• ";
+      }
+      Array.from(node.childNodes).forEach(walk);
+      out += "\n";
+      return;
+    }
+    const block = /^(P|DIV|H[1-6]|BLOCKQUOTE|PRE|UL|OL|TR)$/.test(tag);
+    if (block && out && !out.endsWith("\n")) out += "\n";
+    Array.from(node.childNodes).forEach(walk);
+    if (block && out && !out.endsWith("\n")) out += "\n";
+  };
+  Array.from(doc.body.childNodes).forEach(walk);
+  return out;
+}
+
 function snippet(note) {
-  return (note.text || "").replace(/\s+/g, " ").trim();
+  const raw = note.text || "";
+  const plain = note.rich ? htmlToText(raw) : raw;
+  return plain.replace(/\s+/g, " ").trim();
 }
 
 function plural(n, word) {
