@@ -409,17 +409,18 @@ function reconcileOpenWindowsAfterSystemChange() {
 }
 
 // ---------- IPC from renderer ----------
-ipcMain.on('note:update', (e, payload) => {
-  if (!payload || typeof payload.id !== 'string') return;
-  const { id, text, rich, color, opacity, fontSize, monospace, ghost } = payload;
+ipcMain.on("note:update", (e, payload) => {
+  if (!payload || typeof payload.id !== "string") return;
+  const { id, text, rich, color, opacity, fontSize, monospace, ghost } =
+    payload;
   const patch = {};
-  if (typeof text === 'string') patch.text = text;
-  if (typeof rich === 'boolean') patch.rich = rich;
-  if (typeof color === 'string') patch.color = color;
-  if (typeof opacity === 'number') patch.opacity = opacity;
-  if (typeof fontSize === 'number') patch.fontSize = fontSize;
-  if (typeof monospace === 'boolean') patch.monospace = monospace;
-  if (typeof ghost === 'boolean') patch.ghost = ghost;
+  if (typeof text === "string") patch.text = text;
+  if (typeof rich === "boolean") patch.rich = rich;
+  if (typeof color === "string") patch.color = color;
+  if (typeof opacity === "number") patch.opacity = opacity;
+  if (typeof fontSize === "number") patch.fontSize = fontSize;
+  if (typeof monospace === "boolean") patch.monospace = monospace;
+  if (typeof ghost === "boolean") patch.ghost = ghost;
   const record = store.update(id, patch);
 
   // Ghost mode forces always-on-top so the toolbar stays reachable; pin is restored when it ends.
