@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         Thanks for suggesting an improvement to Ghost Notes! Please describe your idea clearly.
-        
+
         > **Note:** If you'd like to implement this yourself, please wait for a maintainer to respond and assign the issue to you before writing any code.
 
   - type: checkboxes

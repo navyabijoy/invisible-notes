@@ -19,6 +19,7 @@ const colorBtn = document.getElementById('colorBtn');
 const colorPopover = document.getElementById('colorPopover');
 const formatBtn = document.getElementById('formatBtn');
 const formatPopover = document.getElementById('formatPopover');
+const monoBtn = document.getElementById('mono');
 const pinBtn = document.getElementById('pin');
 
 let state = { text: '', color: 'yellow', opacity: 0.85, fontSize: 15, monospace: false, ghost: false, pinned: true };
@@ -86,7 +87,19 @@ pinBtn.addEventListener('click', () => setPinned(!state.pinned));
 // --- Monospace (legacy code snippet support) ---
 function applyMonospace() {
   noteEl.classList.toggle('mono', state.monospace);
+  monoBtn.classList.toggle('active', state.monospace);
+  monoBtn.title = state.monospace
+    ? 'Normal font'
+    : 'Monospace: better for code snippets';
 }
+
+function setMonospace(on) {
+  state.monospace = on;
+  applyMonospace();
+  push();
+}
+
+monoBtn.addEventListener('click', () => setMonospace(!state.monospace));
 
 function applyColor(color) {
   const c = COLORS[color] || COLORS.yellow;

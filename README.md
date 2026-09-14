@@ -37,10 +37,11 @@ The app lives in the **menu bar / system tray** (no Dock icon on macOS). A note 
 - **Click-through mode:** the ghost icon (👻) in the hover bar — clicks pass through to whatever is behind the note; hover the bar to interact again
 - **Close a note:** ✕ in the hover bar — this **hides** the note, it does not delete it. The note stays in the Notes Manager and can be reopened any time.
 - **Delete a note permanently:** only from the Notes Manager, with a confirmation prompt.
-- **Keyboard shortcuts list:** tray icon → Keyboard Shortcuts…, or the **?** button in the Notes Manager — every active shortcut, written the way your platform writes it
+- **Keyboard shortcuts list & customization:** tray icon → Keyboard Shortcuts…, or the **?** button in the Notes Manager — view every active shortcut, customize keybindings by clicking the edit icon on any row, or reset to defaults at any time.
+- **Backup / migrate notes:** the download/upload buttons in the Notes Manager toolbar. "Export All Notes" writes every note to a plain JSON backup file (the file itself is not encrypted — keep it somewhere safe); "Import Notes" restores a backup, either merging it with your current notes or replacing them.
 - **Quit:** tray icon → Quit
 
-The standard keyboard shortcuts work while a Ghost Notes note or the Notes Manager has focus. They stay inactive in other apps, so the same shortcuts remain available to your browser, IDE, and operating system. The three-modifier new-note shortcut is the only global binding, providing a way back into the app when every Ghost Notes window is hidden. You never have to come back here to look any of this up — the in-app list under **Keyboard Shortcuts…** shows the same thing.
+The standard keyboard shortcuts work while a Ghost Notes note or the Notes Manager has focus. They stay inactive in other apps, so the same shortcuts remain available to your browser, IDE, and operating system. The three-modifier new-note shortcut is the only global binding, providing a way back into the app when every Ghost Notes window is hidden. You never have to come back here to look any of this up — the in-app list under **Keyboard Shortcuts…** shows the same thing and lets you rebind them.
 
 Notes (text, position, size, color, opacity, open/hidden state) auto-save and reappear on next launch. Data lives in a single local JSON file in the OS app-data folder — never uploaded anywhere.
 
@@ -59,12 +60,12 @@ Each note remembers which display it was on. If a monitor is disconnected, or a 
 
 Ghost Notes is built to work on both macOS and Windows, but a couple of OS-level behaviors are genuinely not identical — documented here rather than silently assumed:
 
-| Behavior | macOS | Windows |
-|---|---|---|
-| Screen-capture exclusion | Reliable across QuickTime, native recording, Zoom/Meet/Teams, OBS | Requires Windows 10 build 19041 (May 2020 Update) or later. On older Windows builds, notes may be visible to screen recordings — this is an OS limitation, not a bug. |
-| Visible over fullscreen apps you're sharing | Yes (`visibleOnFullScreenSpaces`) | No native equivalent — Windows has no per-app virtual-desktop concept like macOS Spaces. Always-on-top still applies otherwise. |
-| Tray icon | Adaptive light/dark menu bar icon | Standard system tray icon |
-| Click-through, drag, resize, multi-monitor, DPI scaling | Cross-platform via Electron APIs | Same |
+| Behavior                                                | macOS                                                             | Windows                                                                                                                                                               |
+| ------------------------------------------------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Screen-capture exclusion                                | Reliable across QuickTime, native recording, Zoom/Meet/Teams, OBS | Requires Windows 10 build 19041 (May 2020 Update) or later. On older Windows builds, notes may be visible to screen recordings — this is an OS limitation, not a bug. |
+| Visible over fullscreen apps you're sharing             | Yes (`visibleOnFullScreenSpaces`)                                 | No native equivalent — Windows has no per-app virtual-desktop concept like macOS Spaces. Always-on-top still applies otherwise.                                       |
+| Tray icon                                               | Adaptive light/dark menu bar icon                                 | Standard system tray icon                                                                                                                                             |
+| Click-through, drag, resize, multi-monitor, DPI scaling | Cross-platform via Electron APIs                                  | Same                                                                                                                                                                  |
 
 If you hit different behavior on Windows than described here, please open an issue with your Windows build number.
 

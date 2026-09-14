@@ -19,7 +19,7 @@ If you have a new idea or found a bug that isn't already filed, **open a new iss
 ## Workflow
 
 1. **Find an issue** — browse the [open issues](https://github.com/navyabijoy/invisible-notes/issues) and pick one that interests you.
-2. **Comment** — leave a comment on the issue saying you'd like to work on it (e.g., *"I'd like to take this one"*). Wait for a maintainer to assign it to you.
+2. **Comment** — leave a comment on the issue saying you'd like to work on it (e.g., _"I'd like to take this one"_). Wait for a maintainer to assign it to you.
 3. **Fork & branch** — fork the repo and create a branch named after the issue: `feat/issue-3-custom-shortcuts` or `fix/issue-2-windows-protection`.
 4. **Build & test** — make your changes locally, run the app, and make sure nothing is broken.
 5. **Open a PR** — submit a pull request against `develop` and fill out the PR template. Reference the issue in your description (e.g., `Closes #3`).
@@ -39,6 +39,7 @@ npm start
 The app runs as a tray-only utility — look for the ghost icon in your menu bar or system tray.
 
 To build a distributable:
+
 ```bash
 npm run dist:mac   # macOS
 npm run dist:win   # Windows
@@ -50,7 +51,7 @@ npm run dist:win   # Windows
 
 - This is a vanilla Node.js + Electron project. No bundler, no TypeScript.
 - Keep platform-specific logic inside `platform.js`. Avoid branching on `process.platform` anywhere else.
-- Write plain comments that explain the *why*, not just the *what*.
+- Write plain comments that explain the _why_, not just the _what_.
 - Keep PRs focused — one feature or fix per PR. Avoid mixing unrelated changes.
 
 ---
@@ -72,16 +73,16 @@ This project follows the [Conventional Commits v1.0.0](https://www.conventionalc
 
 ### Types
 
-| Type | When to use |
-|------|-------------|
-| `feat` | A new feature |
-| `fix` | A bug fix |
-| `docs` | Documentation changes only |
-| `style` | Formatting, whitespace — no logic change |
-| `refactor` | Code restructure with no feature or fix |
-| `perf` | Performance improvements |
-| `test` | Adding or updating tests |
-| `chore` | Build process, dependencies, tooling |
+| Type       | When to use                              |
+| ---------- | ---------------------------------------- |
+| `feat`     | A new feature                            |
+| `fix`      | A bug fix                                |
+| `docs`     | Documentation changes only               |
+| `style`    | Formatting, whitespace — no logic change |
+| `refactor` | Code restructure with no feature or fix  |
+| `perf`     | Performance improvements                 |
+| `test`     | Adding or updating tests                 |
+| `chore`    | Build process, dependencies, tooling     |
 
 ### Scopes (optional but encouraged)
 

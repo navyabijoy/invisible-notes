@@ -1,0 +1,6 @@
+node_modules
+dist
+out
+build/Release
+package-lock.json
+bun.lock
