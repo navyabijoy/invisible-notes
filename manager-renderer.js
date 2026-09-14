@@ -396,13 +396,21 @@ function startRecording(shortcut, kbdEl) {
     parts.push(key);
     const newAccelerator = parts.join('+');
 
-    cancelRecording();
+    // Remove the listener immediately so no further keydown events fire
+    // while we wait for the IPC round-trip. Do NOT call cancelRecording() here —
+    // that would re-render with stale data before the response arrives.
+    document.removeEventListener('keydown', onKeyDown, { capture: true });
+    recordingCleanup = null;
+
     const updated = await window.manager.setShortcut(shortcut.id, newAccelerator);
+
+    // Now clean up recording state and re-render once with the fresh list
+    recordingShortcutId = null;
     if (Array.isArray(updated)) {
       shortcuts = updated;
-      renderShortcuts(shortcuts);
-      render();
     }
+    renderShortcuts(shortcuts);
+    render();
   };
 
   document.addEventListener('keydown', onKeyDown, { capture: true });
