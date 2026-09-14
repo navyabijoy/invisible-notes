@@ -1,6 +1,11 @@
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
 
+// Pasted images are files under userData/note-images; the renderer stores only
+// the filename in a `data-name` attribute and rebuilds the file:// src here.
+const SAFE_IMAGE_NAME = /^[\w-]+\.[a-z0-9]+$/;
+let imagesDir = null;
+
 const COLORS = {
   yellow: { tint: "255, 224, 130", dark: false },
   green: { tint: "178, 235, 178", dark: false },
@@ -30,6 +35,7 @@ let state = {
   monospace: false,
   ghost: false,
   pinned: true,
+  images: [],
 };
 
 const noteEl = document.querySelector(".note");
@@ -292,7 +298,7 @@ formatPopover.addEventListener("click", (e) => {
     const color = swatch.dataset.color;
     textEl.focus();
     document.execCommand("foreColor", false, color);
-    state.text = sanitizeHTML(textEl.innerHTML);
+    syncStateFromDom();
     push();
     return;
   }
@@ -326,7 +332,7 @@ formatPopover.addEventListener("click", (e) => {
 
   // Do not close the popover automatically so user can select multiple formatting options
 
-  state.text = sanitizeHTML(textEl.innerHTML);
+  syncStateFromDom();
   push();
 });
 
@@ -416,6 +422,170 @@ document.addEventListener("selectionchange", () => {
   });
 });
 
+// --- Inline images (pasted from the system clipboard) ---
+function imageUrl(name) {
+  const base = imagesDir.replace(/\\/g, "/");
+  const prefix = base.startsWith("/") ? "file://" : "file:///";
+  // Encode each segment so reserved characters like # or ? in the userData path
+  // cannot be read as a URL fragment/query; the Windows drive colon stays.
+  const encodedBase = base
+    .split("/")
+    .map((seg) => (/^[A-Za-z]:$/.test(seg) ? seg : encodeURIComponent(seg)))
+    .join("/");
+  return `${prefix}${encodedBase}/${encodeURIComponent(name)}`;
+}
+
+function hydrateImage(img) {
+  const name = img.dataset.name;
+  if (!imagesDir || !SAFE_IMAGE_NAME.test(name)) return;
+  img.src = imageUrl(name);
+  img.draggable = false;
+}
+
+function hydrateImages() {
+  if (!imagesDir) return;
+  textEl.querySelectorAll("img[data-name]").forEach((img) => hydrateImage(img));
+}
+
+// Insert a node at the caret, falling back to the end of the editor when the
+// selection is elsewhere (e.g. the toolbar button still has focus).
+function insertAtCaret(node) {
+  const sel = window.getSelection();
+  let range = sel.rangeCount ? sel.getRangeAt(0) : null;
+  if (!range || !textEl.contains(range.startContainer)) {
+    range = document.createRange();
+    range.selectNodeContents(textEl);
+    range.collapse(false);
+  }
+  range.deleteContents();
+  range.insertNode(node);
+  range.setStartAfter(node);
+  range.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+// Persist the editor HTML plus the list of referenced image files.
+function syncStateFromDom() {
+  state.text = sanitizeHTML(textEl.innerHTML);
+  state.images = [
+    ...new Set(
+      [...textEl.querySelectorAll("img[data-name]")]
+        .map((img) => img.dataset.name)
+        .filter((name) => SAFE_IMAGE_NAME.test(name)),
+    ),
+  ];
+}
+
+async function saveAndInsertImage(file) {
+  // Show the clipboard bytes instantly; swap the src to the persisted file
+  // once main has written it, then revoke the blob so it leaves memory.
+  const objectUrl = URL.createObjectURL(file);
+  const img = document.createElement("img");
+  img.src = objectUrl;
+  img.draggable = false;
+  insertAtCaret(img);
+  img.scrollIntoView({ block: "nearest" });
+  try {
+    const type =
+      file.type && file.type.startsWith("image/") ? file.type : "image/png";
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const name = await window.notes.saveImage(id, type, bytes);
+    if (!name) {
+      img.remove();
+      return;
+    }
+    img.dataset.name = name;
+    hydrateImage(img);
+  } catch (_) {
+    img.remove();
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+// Notion-style deletion: backspace/delete adjacent to an image first selects
+// it so a diagram is not destroyed by an accidental keypress; a second press
+// removes it.
+function adjacentImage(container, offset, dir) {
+  let node;
+  if (container.nodeType === Node.TEXT_NODE) {
+    if (dir < 0 && offset > 0) return null;
+    if (dir > 0 && offset < container.length) return null;
+    node = container;
+  } else {
+    const child = container.childNodes[dir < 0 ? offset - 1 : offset];
+    if (child) {
+      if (child.tagName === "IMG") return child;
+      if (child.tagName === "DIV") {
+        const edge = dir < 0 ? child.lastChild : child.firstChild;
+        return edge && edge.tagName === "IMG" ? edge : null;
+      }
+      return null;
+    }
+    node = container;
+    if (node === textEl) return null;
+  }
+  while (node && node !== textEl) {
+    const sib = dir < 0 ? node.previousSibling : node.nextSibling;
+    if (sib) {
+      if (sib.tagName === "IMG") return sib;
+      if (sib.tagName === "DIV") {
+        const edge = dir < 0 ? sib.lastChild : sib.firstChild;
+        return edge && edge.tagName === "IMG" ? edge : null;
+      }
+      return null;
+    }
+    node = node.parentNode;
+  }
+  return null;
+}
+
+function selectNode(node) {
+  const range = document.createRange();
+  range.selectNode(node);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+textEl.addEventListener("keydown", (e) => {
+  if (e.key !== "Backspace" && e.key !== "Delete") return;
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  if (!range.collapsed) return;
+  const img = adjacentImage(
+    range.startContainer,
+    range.startOffset,
+    e.key === "Backspace" ? -1 : 1,
+  );
+  if (img) {
+    e.preventDefault();
+    selectNode(img);
+  }
+});
+
+// Reflect "image is inside the current selection" so CSS can draw a clear
+// selected outline (Chromium's tint on <img> selection is too subtle).
+document.addEventListener("selectionchange", () => {
+  if (!textEl.querySelector("img")) return;
+  const sel = window.getSelection();
+  textEl.querySelectorAll("img").forEach((img) => {
+    img.classList.toggle(
+      "selected",
+      !sel.isCollapsed && sel.rangeCount > 0 && sel.containsNode(img, false),
+    );
+  });
+});
+
+textEl.addEventListener("click", (e) => {
+  if (e.target.tagName === "IMG") selectNode(e.target);
+});
+
+// Rich content dropped from other apps would inject markup — block it.
+textEl.addEventListener("drop", (e) => e.preventDefault());
+
 function sanitizeHTML(html) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, "text/html");
@@ -440,12 +610,26 @@ function sanitizeHTML(html) {
     "DIV",
     "BR",
     "FONT",
+    "IMG",
   ];
 
   const walk = (node) => {
     if (node.nodeType === 1) {
       // Element
-      if (!allowedTags.includes(node.tagName.toUpperCase())) {
+      const tag = node.tagName.toUpperCase();
+      if (tag === "IMG") {
+        // Pasted images are identified by a generated filename; anything else
+        // (remote srcs, scripts, bad names) is dropped rather than kept.
+        const name = node.getAttribute("data-name") || "";
+        if (SAFE_IMAGE_NAME.test(name)) {
+          while (node.attributes.length > 0) {
+            node.removeAttribute(node.attributes[0].name);
+          }
+          node.setAttribute("data-name", name);
+        } else {
+          node.parentNode.removeChild(node);
+        }
+      } else if (!allowedTags.includes(tag)) {
         const textNode = document.createTextNode(node.textContent);
         node.parentNode.replaceChild(textNode, node);
       } else {
@@ -511,6 +695,7 @@ function applyState() {
     textEl.innerHTML = content;
   }
   normalizeChecklistMarkup();
+  hydrateImages();
 
   applyGhost();
   applyPinned();
@@ -523,6 +708,7 @@ function push() {
     id,
     text: state.text,
     rich: state.rich,
+    images: state.images,
     color: state.color,
     opacity: state.opacity,
     fontSize: state.fontSize,
@@ -552,13 +738,28 @@ let inputTimeout;
 textEl.addEventListener("input", () => {
   clearTimeout(inputTimeout);
   inputTimeout = setTimeout(() => {
-    state.text = sanitizeHTML(textEl.innerHTML);
+    syncStateFromDom();
     push();
   }, 500);
 });
 
 // Security/Paste handling
-textEl.addEventListener("paste", (e) => {
+textEl.addEventListener("paste", async (e) => {
+  if (!e.clipboardData) return;
+  const imageItems = [...e.clipboardData.items].filter((i) =>
+    i.type.startsWith("image/"),
+  );
+  if (imageItems.length > 0) {
+    e.preventDefault();
+    for (const item of imageItems) {
+      const file = item.getAsFile();
+      if (file) await saveAndInsertImage(file);
+    }
+    syncStateFromDom();
+    push();
+    return;
+  }
+
   e.preventDefault();
   const html = e.clipboardData.getData("text/html");
   const plain = e.clipboardData.getData("text/plain");
@@ -603,14 +804,34 @@ document
 window.notes.onToggleGhost(() => setGhost(!state.ghost));
 
 // Load persisted state
-window.notes.getState(id).then((s) => {
-  if (s) state = Object.assign(state, s);
-  // Older records (pre-v4) may omit this; normalize missing to false
-  // so the renderer always treats monospace as a boolean.
-  state.monospace = !!state.monospace;
-  applyState();
-  textEl.focus();
-});
+Promise.all([window.notes.getState(id), window.notes.imagesDir()]).then(
+  ([s, dir]) => {
+    if (s) state = Object.assign(state, s);
+    // Older records (pre-v4) may omit this; normalize missing to false
+    // so the renderer always treats monospace as a boolean.
+    state.monospace = !!state.monospace;
+    state.images = Array.isArray(state.images) ? state.images : [];
+    imagesDir = dir;
+    // Any referenced image means the body is markup; treat it as rich so the
+    // <img> tags are parsed instead of being escaped into visible text.
+    if (state.images.some((name) => SAFE_IMAGE_NAME.test(name))) {
+      state.rich = true;
+    }
+    // Records from the pre-rich era kept images outside the text; fold any
+    // unreferenced ones into the body so they stay visible.
+    const missing = state.images.filter(
+      (name) => SAFE_IMAGE_NAME.test(name) && !state.text.includes(name),
+    );
+    if (missing.length > 0) {
+      const markup = missing
+        .map((name) => `<img data-name="${name}">`)
+        .join("");
+      state.text = `${state.text}${state.text ? "<br>" : ""}${markup}`;
+    }
+    applyState();
+    textEl.focus();
+  },
+);
 
 // Markdown Parser
 function parseMarkdownToHTML(text) {

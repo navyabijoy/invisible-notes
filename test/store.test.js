@@ -108,6 +108,20 @@ test("accepts a v5 file so merge order with the images change does not matter", 
   assert.equal(store.get("a").workspaceId, DEFAULT_WORKSPACE_ID);
 });
 
+test("backfills an empty images array for records that predate the field", () => {
+  const store = freshStore({
+    version: 6,
+    notes: [{ id: "a", text: "no pics yet" }],
+  });
+  assert.equal(store.data.version, STORE_VERSION);
+  assert.deepEqual(store.get("a").images, []);
+});
+
+test("new notes start with an empty images array", () => {
+  const store = freshStore();
+  assert.deepEqual(store.create({ text: "fresh" }).images, []);
+});
+
 test("keeps settings keys it does not know about", () => {
   const store = freshStore({
     version: 4,

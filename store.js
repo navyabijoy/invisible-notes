@@ -2,7 +2,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const STORE_VERSION = 6;
+const STORE_VERSION = 7;
 
 const {
   DEFAULT_NOTE_WIDTH,
@@ -102,6 +102,8 @@ function defaultRecord(overrides = {}) {
     fontSize: overrides.fontSize || 15,
     monospace: !!overrides.monospace,
     rich: !!overrides.rich,
+    // Filenames (not paths) of pasted images living in userData/note-images.
+    images: Array.isArray(overrides.images) ? overrides.images : [],
     // Which workspace this note belongs to (issue #8). Independent of
     // `visible`. See the note on effective visibility below.
     workspaceId: overrides.workspaceId || DEFAULT_WORKSPACE_ID,
@@ -217,6 +219,12 @@ function migrate(data) {
   } else {
     notes = sourceNotes;
   }
+
+  // v7 adds `images`; backfill it on every migration path.
+  notes = notes.map((n) => ({
+    ...n,
+    images: Array.isArray(n.images) ? n.images : [],
+  }));
 
   return normalizeWorkspaces({ ...data, notes });
 }

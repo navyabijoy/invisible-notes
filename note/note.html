@@ -195,6 +195,24 @@
         white-space: pre-wrap;
         word-break: break-word;
       }
+      .editor::-webkit-scrollbar {
+        width: 8px;
+        cursor: default;
+      }
+      .editor::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.18);
+        border-radius: 4px;
+        cursor: default;
+      }
+      .editor::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 0, 0, 0.32);
+      }
+      body.dark .editor::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+      }
+      body.dark .editor::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.35);
+      }
       .editor[placeholder]:empty:before {
         content: attr(placeholder);
         color: rgba(0, 0, 0, 0.35);
@@ -293,6 +311,38 @@
         border-color: rgba(255, 255, 255, 0.54);
         background: rgba(255, 255, 255, 0.18);
         color: #fff;
+      }
+
+      @keyframes imgin {
+        from {
+          opacity: 0;
+          transform: scale(0.985);
+        }
+      }
+
+      /* Pasted images reflow with the note: width is capped by the editor,
+         height follows, so resizing the window scales them without cropping. */
+      .editor img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        border-radius: 6px;
+        margin: 6px 0;
+        cursor: default;
+        -webkit-user-drag: none;
+        animation: imgin 0.18s ease;
+        transition: opacity 0.15s ease;
+      }
+      .editor img.selected {
+        outline: 2.5px solid rgba(64, 128, 255, 0.9);
+        outline-offset: 1.5px;
+      }
+      /* Ghost mode passes clicks through the note body. Images must not catch
+         the forwarded mouse events that drive that hand-off, so they go inert
+         and dim to signal they can be clicked through. */
+      .note.ghost .editor img {
+        pointer-events: none;
+        opacity: 0.35;
       }
 
       .format-control {
