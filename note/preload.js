@@ -3,6 +3,9 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("notes", {
   update: (payload) => ipcRenderer.send("note:update", payload),
   getState: (id) => ipcRenderer.invoke("note:getState", id),
+  setCollapsed: (id, collapsed) =>
+    ipcRenderer.invoke("note:setCollapsed", { id, collapsed }),
+  dragBubble: (id, phase) => ipcRenderer.send("note:dragBubble", { id, phase }),
   close: (id) => ipcRenderer.send("note:close", id),
   newNote: () => ipcRenderer.send("note:new"),
   setIgnoreMouse: (id, ignore) =>

@@ -35,6 +35,7 @@ The app lives in the **menu bar / system tray** (no Dock icon on macOS). A note 
 - **Code / monospace:** the `{}` icon in the hover bar switches that note to a monospace font (saved per note)
 - **Pin / unpin:** the 📌 icon in the hover bar. Pinned (default) keeps the note always-on-top, even when you switch to another app. Unpinned makes it a normal window that gets covered when another app is focused.
 - **Click-through mode:** the ghost icon (👻) in the hover bar — clicks pass through to whatever is behind the note; hover the bar to interact again
+- **Collapse a note:** the − button in the hover bar turns it into a small dot matching its color, near the center of the note. Drag the dot to move it; click it (or press Enter/Space while focused) to restore the previous size. Collapsed state is saved across restarts, and dots remain clickable in click-through mode.
 - **Close a note:** ✕ in the hover bar — this **hides** the note, it does not delete it. The note stays in the Notes Manager and can be reopened any time.
 - **Delete a note permanently:** only from the Notes Manager, with a confirmation prompt.
 - **Keyboard shortcuts list & customization:** tray icon → Keyboard Shortcuts…, or the **?** button in the Notes Manager — view every active shortcut, customize keybindings by clicking the edit icon on any row, or reset to defaults at any time.

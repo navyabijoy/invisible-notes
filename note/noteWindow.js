@@ -3,7 +3,11 @@ const path = require("path");
 const { BrowserWindow } = require("electron");
 const platform = require("../platform");
 const { clampToVisibleDisplay } = require("../displayUtils");
-const { MIN_NOTE_WIDTH, MIN_NOTE_HEIGHT } = require("./noteSize");
+const {
+  COLLAPSED_NOTE_SIZE,
+  MIN_NOTE_WIDTH,
+  MIN_NOTE_HEIGHT,
+} = require("./noteSize");
 
 // Re-apply screen-capture exclusion on a note window.
 function applyContentProtection(win) {
@@ -14,8 +18,12 @@ function applyContentProtection(win) {
 function createNoteWindow(record, { onMoved, onResized, onClosed } = {}) {
   const bounds = clampToVisibleDisplay({
     ...record,
-    width: Math.max(record.width || 0, MIN_NOTE_WIDTH),
-    height: Math.max(record.height || 0, MIN_NOTE_HEIGHT),
+    width: record.collapsed
+      ? COLLAPSED_NOTE_SIZE
+      : Math.max(record.width || 0, MIN_NOTE_WIDTH),
+    height: record.collapsed
+      ? COLLAPSED_NOTE_SIZE
+      : Math.max(record.height || 0, MIN_NOTE_HEIGHT),
   });
 
   const win = new BrowserWindow({
@@ -25,11 +33,11 @@ function createNoteWindow(record, { onMoved, onResized, onClosed } = {}) {
     y: bounds.y,
     frame: false,
     transparent: true,
-    resizable: true,
+    resizable: !record.collapsed,
     hasShadow: false,
     skipTaskbar: true,
-    minWidth: MIN_NOTE_WIDTH,
-    minHeight: MIN_NOTE_HEIGHT,
+    minWidth: record.collapsed ? COLLAPSED_NOTE_SIZE : MIN_NOTE_WIDTH,
+    minHeight: record.collapsed ? COLLAPSED_NOTE_SIZE : MIN_NOTE_HEIGHT,
     backgroundColor: "#00000000",
     show: false,
     webPreferences: {

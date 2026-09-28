@@ -572,3 +572,48 @@ test("persists, updates and clears shortcut overrides in NoteStore", () => {
   const store3 = openStore(dir);
   assert.deepEqual(store3.getShortcutOverrides(), {});
 });
+
+test("v7 notes migrate to expanded without changing their geometry", () => {
+  const store = freshStore({
+    version: 7,
+    notes: [
+      {
+        id: "legacy",
+        text: "keep me",
+        x: 50,
+        y: 60,
+        width: 400,
+        height: 300,
+        visible: false,
+      },
+    ],
+  });
+  const note = store.get("legacy");
+  assert.equal(store.data.version, 8);
+  assert.equal(note.collapsed, false);
+  assert.equal(note.width, 400);
+  assert.equal(note.height, 300);
+  assert.equal(note.visible, false);
+  assert.equal(note.text, "keep me");
+});
+
+test("collapsed notes survive reload and export/import with expanded dimensions", () => {
+  const dir = storeDir();
+  const store = openStore(dir);
+  const note = store.create({ text: "private", width: 420, height: 260 });
+  assert.equal(note.collapsed, false);
+  store.update(note.id, { collapsed: true, x: 200, y: 300 });
+  store.flush();
+  const restored = openStore(dir).get(note.id);
+  assert.equal(restored.collapsed, true);
+  assert.equal(restored.width, 420);
+  assert.equal(restored.height, 260);
+  assert.equal(restored.x, 200);
+  const imported = normalizeImport({
+    version: STORE_VERSION,
+    notes: [restored],
+  });
+  assert.equal(imported[0].collapsed, true);
+  assert.equal(imported[0].width, 420);
+  assert.equal(imported[0].text, "private");
+});

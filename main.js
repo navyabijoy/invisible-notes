@@ -28,6 +28,7 @@ const {
   getShortcuts,
   applyOverrides,
 } = require("./manager/shortcuts");
+const { createNoteCollapseController } = require("./note/noteCollapse");
 const { createManagerModule } = require("./manager/manager");
 
 // User-facing save errors; stack traces stay in the console.
@@ -36,6 +37,7 @@ let writeErrorShown = false;
 // Store and manager are created in app.whenReady() once safeStorage is available.
 let store = null;
 let manager = null;
+let noteCollapse = null;
 
 // OS-backed encryption for notes.json, or plaintext if the platform cannot encrypt.
 function createStoreCodec() {
@@ -173,10 +175,13 @@ function createManager() {
 function openNoteWindow(record) {
   const win = createNoteWindow(record, {
     onMoved: (w) => {
+      if (noteCollapse?.isChanging(w)) return;
       const [x, y] = w.getPosition();
       store.update(record.id, { x, y, displayId: displayIdForPoint(x, y) });
     },
     onResized: (w) => {
+      if (noteCollapse?.isChanging(w) || store.get(record.id)?.collapsed)
+        return;
       const [x, y] = w.getPosition();
       const [width, height] = w.getSize();
       store.update(record.id, {
@@ -476,10 +481,26 @@ ipcMain.on("note:update", (e, payload) => {
   manager.notifyChanged();
 });
 
-ipcMain.on("note:setIgnoreMouse", (e, { id, ignore }) => {
+ipcMain.handle("note:setCollapsed", (e, payload) =>
+  noteCollapse?.setCollapsed(e, payload),
+);
+ipcMain.on("note:dragBubble", (e, payload) =>
+  noteCollapse?.dragBubble(e, payload),
+);
+
+ipcMain.on("note:setIgnoreMouse", (e, payload) => {
+  if (
+    !payload ||
+    typeof payload.id !== "string" ||
+    typeof payload.ignore !== "boolean"
+  )
+    return;
+  const { id, ignore } = payload;
   const win = noteWindows.get(id);
-  if (win && !win.isDestroyed())
-    win.setIgnoreMouseEvents(!!ignore, { forward: true });
+  if (win && !win.isDestroyed() && win.webContents === e.sender)
+    win.setIgnoreMouseEvents(ignore && !store.get(id)?.collapsed, {
+      forward: true,
+    });
 });
 
 ipcMain.on("note:setPinned", (e, { id, pinned }) => {
@@ -690,6 +711,12 @@ if (!gotLock) {
     store = createStore();
     applyOverrides(store.getShortcutOverrides());
     manager = createManager();
+    noteCollapse = createNoteCollapseController({
+      store,
+      noteWindows,
+      screen,
+      onChanged: () => manager.notifyChanged(),
+    });
 
     // Needs the store: orphan detection compares files against note records.
     pruneOrphanImages();

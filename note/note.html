@@ -29,6 +29,60 @@
         user-select: none;
       }
 
+      body:not(.ready) {
+        visibility: hidden;
+      }
+
+      body.collapsed .note {
+        display: none;
+      }
+
+      body.transitioning .note,
+      body.transitioning #bubble {
+        pointer-events: none;
+      }
+      body.transitioning .bar {
+        -webkit-app-region: no-drag;
+      }
+
+      #bubble {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 40px;
+        height: 40px;
+        translate: -50% -50%;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.65);
+        background: rgb(var(--tint));
+        color: rgba(0, 0, 0, 0.65);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+        cursor: grab;
+        touch-action: none;
+        -webkit-app-region: no-drag;
+      }
+      #bubble[hidden] {
+        display: none;
+      }
+      #bubble:hover {
+        filter: brightness(1.08);
+      }
+      #bubble:focus-visible {
+        outline: 2px solid currentColor;
+        outline-offset: -5px;
+      }
+      #bubble.dragging {
+        cursor: grabbing;
+      }
+      #bubble svg {
+        pointer-events: none;
+      }
+      body.dark #bubble {
+        color: #fff;
+      }
+
       .note {
         width: 100%;
         height: 100%;
@@ -54,6 +108,23 @@
         background: rgba(0, 0, 0, 0.06);
         opacity: 0;
         transition: opacity 0.15s ease;
+      }
+      @media (max-width: 380px) {
+        .bar {
+          gap: 2px;
+          padding: 0 4px;
+        }
+        .bar .btn {
+          padding: 2px;
+          font-size: 13px;
+        }
+        .bar input[type="range"] {
+          width: 32px;
+          min-width: 24px;
+        }
+      }
+      .bar .btn {
+        flex-shrink: 0;
       }
       .note:hover .bar {
         opacity: 1;
@@ -655,6 +726,14 @@
           👻
         </button>
         <button class="btn" id="new" title="New note">＋</button>
+        <button
+          class="btn"
+          id="collapse"
+          title="Collapse to floating dot"
+          aria-label="Collapse to floating dot"
+        >
+          −
+        </button>
         <button class="btn" id="close" title="Close note">✕</button>
       </div>
       <div
@@ -668,6 +747,25 @@
         spellcheck="false"
       ></div>
     </div>
+    <button
+      id="bubble"
+      hidden
+      aria-label="Restore note"
+      title="Click to restore · Drag to move"
+    >
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        aria-hidden="true"
+      >
+        <path d="M6 3h9l3 3v15H6z" />
+        <path d="M14 3v5h4M9 12h6M9 16h4" />
+      </svg>
+    </button>
     <script src="note.js"></script>
   </body>
 </html>

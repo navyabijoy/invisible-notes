@@ -300,3 +300,22 @@ test("onClosed callback fires when the window emits closed", (t, done) => {
   );
   done();
 });
+
+test("persisted collapsed notes start as protected, fixed-size bubbles", async () => {
+  const { noteWindow } = loadNoteWindowWithPlatform({ isWindows: true });
+  const record = baseRecord({ collapsed: true, x: 9000, y: 9000 });
+  const win = noteWindow.createNoteWindow(record);
+  assert.equal(win.options.width, 48);
+  assert.equal(win.options.height, 48);
+  assert.equal(win.options.minWidth, 48);
+  assert.equal(win.options.minHeight, 48);
+  assert.equal(win.options.resizable, false);
+  assert.equal(win.options.x, 40);
+  assert.equal(win.options.y, 40);
+  assert.equal(record.width, 360);
+  await new Promise((resolve) => win.once("ready-to-show", resolve));
+  assert.equal(win._contentProtection, true);
+  win._contentProtection = false;
+  win.emit("show");
+  assert.equal(win._contentProtection, true);
+});

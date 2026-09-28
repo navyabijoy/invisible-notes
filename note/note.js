@@ -26,6 +26,7 @@ const formatBtn = document.getElementById("formatBtn");
 const formatPopover = document.getElementById("formatPopover");
 const monoBtn = document.getElementById("mono");
 const pinBtn = document.getElementById("pin");
+const bubble = document.getElementById("bubble");
 
 let state = {
   text: "",
@@ -35,6 +36,7 @@ let state = {
   monospace: false,
   ghost: false,
   pinned: true,
+  collapsed: false,
   images: [],
 };
 
@@ -55,7 +57,7 @@ function setIgnore(v) {
 
 function applyGhost() {
   noteEl.classList.toggle("ghost", state.ghost);
-  if (state.ghost) {
+  if (state.ghost && !state.collapsed && !changingCollapsed) {
     setIgnore(true); // pass clicks through by default; the toolbar re-enables
   } else {
     setIgnore(false); // fully interactive again
@@ -73,7 +75,7 @@ function setGhost(on) {
 }
 
 window.addEventListener("mousemove", (e) => {
-  if (!state.ghost) return;
+  if (!state.ghost || state.collapsed || changingCollapsed) return;
   // Re-enable interaction only while hovering the toolbar.
   setIgnore(!e.target.closest(".bar"));
 });
@@ -394,7 +396,7 @@ document.addEventListener("selectionchange", () => {
             isActive = true;
           }
         }
-      } catch (e) {}
+      } catch (e) { }
 
       if (isActive) {
         btn.classList.add("active");
@@ -697,6 +699,7 @@ function applyState() {
   normalizeChecklistMarkup();
   hydrateImages();
 
+  applyCollapsed();
   applyGhost();
   applyPinned();
   applyMonospace();
@@ -800,6 +803,132 @@ document
   .getElementById("close")
   .addEventListener("click", () => window.notes.close(id));
 
+function applyCollapsed() {
+  body.classList.toggle("collapsed", state.collapsed);
+  bubble.hidden = !state.collapsed;
+  noteEl.inert = state.collapsed;
+}
+
+let changingCollapsed = false;
+
+function animateCollapse(collapsed) {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return [];
+  bubble.hidden = false;
+  const scaleX = bubble.offsetWidth / window.innerWidth;
+  const scaleY = bubble.offsetHeight / window.innerHeight;
+  const small = {
+    transform: `scale(${scaleX}, ${scaleY})`,
+    opacity: 0,
+    borderRadius: "24px",
+  };
+  const full = { transform: "scale(1)", opacity: 1, borderRadius: "12px" };
+  const timing = {
+    duration: 220,
+    easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+    fill: "both",
+  };
+  return [
+    noteEl.animate(collapsed ? [full, small] : [small, full], timing),
+    bubble.animate(
+      collapsed
+        ? [
+          { opacity: 0, transform: "scale(0.65)" },
+          { opacity: 1, transform: "scale(1)" },
+        ]
+        : [
+          { opacity: 1, transform: "scale(1)" },
+          { opacity: 0, transform: "scale(0.65)" },
+        ],
+      { ...timing, duration: collapsed ? 130 : 90, delay: collapsed ? 90 : 0 },
+    ),
+  ];
+}
+
+async function setCollapsed(collapsed) {
+  if (changingCollapsed || state.collapsed === collapsed) return;
+  changingCollapsed = true;
+  const previous = state.collapsed;
+  let animations = [];
+  clearTimeout(inputTimeout);
+  syncStateFromDom();
+  push();
+  setColorPopoverOpen(false);
+  setFormatPopoverOpen(false);
+  body.classList.add("transitioning");
+  noteEl.inert = true;
+  setIgnore(false);
+  try {
+    if (collapsed) {
+      animations = animateCollapse(true);
+      await Promise.all(animations.map((animation) => animation.finished));
+    }
+    const result = await window.notes.setCollapsed(id, collapsed);
+    state.collapsed = typeof result === "boolean" ? result : previous;
+    if (!collapsed && state.collapsed === false) {
+      applyCollapsed();
+      noteEl.inert = true;
+      animations = animateCollapse(false);
+      await Promise.all(animations.map((animation) => animation.finished));
+    }
+  } catch (error) {
+    state.collapsed = previous;
+    console.error("Could not change collapsed state", error);
+  } finally {
+    applyCollapsed();
+    for (const animation of animations) animation.cancel();
+    body.classList.remove("transitioning");
+    changingCollapsed = false;
+    applyGhost();
+    (state.collapsed ? bubble : textEl).focus();
+  }
+}
+
+document
+  .getElementById("collapse")
+  .addEventListener("click", () => setCollapsed(true));
+
+let bubblePointer = null;
+bubble.addEventListener("pointerdown", (event) => {
+  if (event.button !== 0 || changingCollapsed) return;
+  bubblePointer = {
+    id: event.pointerId,
+    x: event.screenX,
+    y: event.screenY,
+    moved: false,
+  };
+  bubble.setPointerCapture(event.pointerId);
+  bubble.classList.add("dragging");
+  window.notes.dragBubble(id, "start");
+});
+bubble.addEventListener("pointermove", (event) => {
+  if (!bubblePointer || bubblePointer.id !== event.pointerId) return;
+  if (
+    Math.hypot(
+      event.screenX - bubblePointer.x,
+      event.screenY - bubblePointer.y,
+    ) >= 4
+  ) {
+    bubblePointer.moved = true;
+  }
+  if (bubblePointer.moved) window.notes.dragBubble(id, "move");
+});
+function endBubbleDrag(event) {
+  if (!bubblePointer || bubblePointer.id !== event.pointerId) return;
+  const restore = event.type === "pointerup" && !bubblePointer.moved;
+  bubblePointer = null;
+  bubble.classList.remove("dragging");
+  window.notes.dragBubble(id, "end");
+  if (bubble.hasPointerCapture(event.pointerId))
+    bubble.releasePointerCapture(event.pointerId);
+  if (restore) setCollapsed(false);
+}
+bubble.addEventListener("pointerup", endBubbleDrag);
+bubble.addEventListener("pointercancel", endBubbleDrag);
+bubble.addEventListener("lostpointercapture", endBubbleDrag);
+bubble.addEventListener("click", (event) => {
+  if (event.detail === 0) setCollapsed(false);
+});
+
 // Global hotkey / tray toggles this note from the main process.
 window.notes.onToggleGhost(() => setGhost(!state.ghost));
 
@@ -829,7 +958,8 @@ Promise.all([window.notes.getState(id), window.notes.imagesDir()]).then(
       state.text = `${state.text}${state.text ? "<br>" : ""}${markup}`;
     }
     applyState();
-    textEl.focus();
+    body.classList.add("ready");
+    (state.collapsed ? bubble : textEl).focus();
   },
 );
 
