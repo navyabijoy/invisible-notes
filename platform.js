@@ -1,5 +1,38 @@
+const { execFile } = require("child_process");
+
 const isMac = process.platform === "darwin";
 const isWindows = process.platform === "win32";
+const isLinux = process.platform === "linux";
+
+// Hyprland paints a black rectangle over a window in captured frames when the
+// no_screen_share rule matches it, so a note stays on screen and leaves
+// recordings without its content. The rule goes into the running config, which
+// a compositor reload clears, so the README also shows the snippet for keeping
+// it. KDE and niri have their own window rules, and there is no programmatic
+// API for those, so they stay documented.
+function applyLinuxCaptureExclusion({
+  env = process.env,
+  exec = execFile,
+  callback,
+} = {}) {
+  const done = (error, applied) => {
+    if (callback) callback(error, applied);
+  };
+  if (!isLinux || !env.HYPRLAND_INSTANCE_SIGNATURE) {
+    done(null, false);
+    return;
+  }
+  exec(
+    "hyprctl",
+    [
+      "keyword",
+      "windowrule",
+      "no_screen_share on, match:class ^(invisible-notes)$",
+    ],
+    { env, timeout: 2000 },
+    (error) => done(error || null, !error),
+  );
+}
 
 function hideDockIconIfMac(app) {
   if (isMac && app.dock) app.dock.hide();
@@ -74,12 +107,17 @@ function captureExclusionCaveat() {
   if (isWindows) {
     return "Screen-capture exclusion requires Windows 10 (build 19041) or later. On older Windows versions, notes may be visible to screen recordings.";
   }
+  if (isLinux) {
+    return "On Hyprland a capture shows a black box where a note is while the note stays on your screen. KDE Plasma 6.6 and later can leave a window out of screencasts the same way. Other desktops have no mechanism.";
+  }
   return null;
 }
 
 module.exports = {
   isMac,
   isWindows,
+  isLinux,
+  applyLinuxCaptureExclusion,
   hideDockIconIfMac,
   isCommandOrControlPressed,
   formatAccelerator,

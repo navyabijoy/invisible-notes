@@ -1,4 +1,4 @@
-# Ghost Notes (macOS,Windows)
+# Ghost Notes (macOS, Windows, Linux)
 
 ![Downloads](https://img.shields.io/github/downloads/navyabijoy/invisible-notes/total)
 
@@ -11,6 +11,8 @@ Private. Local. Lightweight. No account, no cloud, no telemetry on note content 
 ## How it works
 
 Each note is a frameless, transparent Electron window with `setContentProtection(true)`. The OS excludes that window from screen capture while you still see it normally. Notes are always-on-top and stay visible even over fullscreen apps (macOS).
+
+Electron has no content protection on Linux, so exclusion comes from the compositor. On Hyprland the app applies the `no_screen_share` window rule on launch, which keeps the note on your screen and hides its content from every capture, as a black box in the recording. See [Linux](#linux).
 
 ## Run
 
@@ -69,6 +71,34 @@ Ghost Notes is built to work on both macOS and Windows, but a couple of OS-level
 
 If you hit different behavior on Windows than described here, please open an issue with your Windows build number.
 
+### Linux
+
+Electron has no content protection on Linux, so exclusion comes from the compositor:
+
+| Compositor        | What happens                                                                                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Hyprland          | On launch the app adds the `no_screen_share` window rule for its own window class. A note stays visible on your screen, and captures show a black rectangle where it is. |
+| KDE Plasma 6.6+   | Right-click the note window → More Actions → Hide from Screencast. KWin leaves the window out of the screencast, so the recording shows the desktop behind it.           |
+| niri              | `block-out-from "screen-capture"` in a window rule draws a black rectangle over the note in captures.                                                                    |
+| GNOME, X11, other | No mechanism, so notes appear in recordings.                                                                                                                             |
+
+The Hyprland rule lives in the running config and a compositor reload clears it. To keep it, add the same rule to your config:
+
+```ini
+windowrule {
+  name = ghost-notes-hide
+  match:class = ^(invisible-notes)$
+  no_screen_share = true
+}
+```
+
+A black box hides the note's content while still showing that something is hidden there. Hyprland does not re-render captures without the window, so a transparent hole is not available there. A recorder running as root that reads the display straight from the kernel captures the note as it appears on screen, which no Linux app can prevent.
+
+#### AppImage notes
+
+- The build needs glibc 2.25 or later, so it runs on Ubuntu 17.04+, Debian 10+, RHEL 8+, and Fedora 27+.
+- Distributions that restrict unprivileged user namespaces (Ubuntu 23.10 and later with AppArmor) stop Electron's sandbox from starting inside an AppImage. Launch it with `--no-sandbox` there, or install an AppArmor profile for it.
+
 ## Privacy
 
 - No login, no account, no cloud sync.
@@ -81,6 +111,7 @@ If you hit different behavior on Windows than described here, please open an iss
 ```bash
 npm run dist:mac    # macOS .dmg / .zip
 npm run dist:win    # Windows installer (.exe via NSIS)
+npm run dist:linux  # Linux AppImage
 ```
 
 Windows builds are currently unsigned — Windows SmartScreen may warn on first run until code-signing is set up.

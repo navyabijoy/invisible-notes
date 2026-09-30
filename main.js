@@ -701,6 +701,7 @@ if (!gotLock) {
 
     setupTray();
     registerFallbackShortcut(globalShortcut, () => createNoteNearCursor());
+    platform.applyLinuxCaptureExclusion();
 
     if (store.all().length === 0) {
       createNoteNearCursor();

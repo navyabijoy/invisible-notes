@@ -11,7 +11,8 @@
     "start": "electron .",
     "dist": "electron-builder",
     "dist:mac": "electron-builder --mac",
-    "dist:win": "electron-builder --win"
+    "dist:win": "electron-builder --win",
+    "dist:linux": "electron-builder --linux"
   },
   "author": "Navya Bijoy",
   "license": "MIT",
@@ -77,6 +78,13 @@
     },
     "win": {
       "target": "nsis",
+      "icon": "build/icon.png"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Utility",
       "icon": "build/icon.png"
     },
     "nsis": {
