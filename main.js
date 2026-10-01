@@ -702,6 +702,7 @@ if (!gotLock) {
 
   app.whenReady().then(() => {
     platform.hideDockIconIfMac(app);
+    platform.applyLinuxCaptureExclusion();
 
     store = createStore();
     applyOverrides(store.getShortcutOverrides());
