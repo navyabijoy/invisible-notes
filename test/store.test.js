@@ -117,6 +117,17 @@ test("backfills an empty images array for records that predate the field", () =>
   assert.deepEqual(store.get("a").images, []);
 });
 
+test("migrates a v7 file preserving autoUpdate if set", () => {
+  const store = freshStore({
+    version: 7,
+    settings: { autoUpdate: false },
+    notes: [{ id: "a", text: "v7 note", images: [] }],
+  });
+  assert.equal(store.data.version, STORE_VERSION);
+  assert.equal(store.getAutoUpdate(), false);
+  assert.equal(store.get("a").text, "v7 note");
+});
+
 test("new notes start with an empty images array", () => {
   const store = freshStore();
   assert.deepEqual(store.create({ text: "fresh" }).images, []);
@@ -237,6 +248,22 @@ test("import replace preserves theme and accent", () => {
   store.replaceAll([{ id: "a", text: "x", workspaceId: DEFAULT_WORKSPACE_ID }]);
   assert.equal(store.getTheme(), "light");
   assert.equal(store.getAccent(), "green");
+});
+
+test("fresh install defaults to autoUpdate true and persists changes", () => {
+  const dir = storeDir();
+  const first = openStore(dir);
+  assert.equal(first.getAutoUpdate(), true);
+  first.setAutoUpdate(false);
+  first.flush();
+
+  const second = openStore(dir);
+  assert.equal(second.getAutoUpdate(), false);
+  second.setAutoUpdate(true);
+  second.flush();
+
+  const third = openStore(dir);
+  assert.equal(third.getAutoUpdate(), true);
 });
 
 test("repairs notes and an active workspace pointing at a workspace that is gone", () => {
