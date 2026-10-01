@@ -1,5 +1,6 @@
 const isMac = process.platform === "darwin";
 const isWindows = process.platform === "win32";
+const isLinux = process.platform === "linux";
 
 function hideDockIconIfMac(app) {
   if (isMac && app.dock) app.dock.hide();
@@ -62,11 +63,14 @@ function formatAccelerator(accelerator) {
 function setPinned(win, pinned) {
   if (pinned) {
     win.setAlwaysOnTop(true, "screen-saver");
-    if (isMac)
+    if (isMac) {
       win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreenSpaces: true });
+    } else if (isLinux) {
+      win.setVisibleOnAllWorkspaces(true);
+    }
   } else {
     win.setAlwaysOnTop(false);
-    if (isMac) win.setVisibleOnAllWorkspaces(false);
+    if (isMac || isLinux) win.setVisibleOnAllWorkspaces(false);
   }
 }
 
@@ -74,12 +78,16 @@ function captureExclusionCaveat() {
   if (isWindows) {
     return "Screen-capture exclusion requires Windows 10 (build 19041) or later. On older Windows versions, notes may be visible to screen recordings.";
   }
+  if (isLinux) {
+    return "Screen-capture exclusion is not supported on Linux. Notes may be visible to screen recordings.";
+  }
   return null;
 }
 
 module.exports = {
   isMac,
   isWindows,
+  isLinux,
   hideDockIconIfMac,
   isCommandOrControlPressed,
   formatAccelerator,

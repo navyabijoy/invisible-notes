@@ -86,6 +86,36 @@ test(
   },
 );
 
+test(
+  "setPinned(true) on Linux enables visibleOnAllWorkspaces",
+  {
+    skip: !platform.isLinux ? "Linux only" : false,
+  },
+  () => {
+    const win = makeFakeWin();
+    platform.setPinned(win, true);
+
+    const ws = win.calls.find((c) => c.method === "setVisibleOnAllWorkspaces");
+    assert.ok(ws, "setVisibleOnAllWorkspaces must be called on Linux");
+    assert.equal(ws.value, true);
+  },
+);
+
+test(
+  "setPinned(false) on Linux clears visibleOnAllWorkspaces",
+  {
+    skip: !platform.isLinux ? "Linux only" : false,
+  },
+  () => {
+    const win = makeFakeWin();
+    platform.setPinned(win, false);
+
+    const ws = win.calls.find((c) => c.method === "setVisibleOnAllWorkspaces");
+    assert.ok(ws, "setVisibleOnAllWorkspaces must be called on Linux unpin");
+    assert.equal(ws.value, false);
+  },
+);
+
 // --- captureExclusionCaveat ---
 
 test(
@@ -112,6 +142,19 @@ test(
       caveat.includes("19041") || caveat.includes("Windows 10"),
       "caveat must reference Windows 10 build 19041",
     );
+  },
+);
+
+test(
+  "captureExclusionCaveat returns a non-empty warning string on Linux",
+  {
+    skip: !platform.isLinux ? "Linux only" : false,
+  },
+  () => {
+    const caveat = platform.captureExclusionCaveat();
+    assert.equal(typeof caveat, "string");
+    assert.ok(caveat.length > 0);
+    assert.ok(caveat.includes("Linux"), "caveat must reference Linux");
   },
 );
 
@@ -169,11 +212,32 @@ test(
   },
 );
 
-// --- isMac / isWindows are mutually exclusive ---
+test(
+  "formatAccelerator on Linux uses word labels joined with +",
+  {
+    skip: !platform.isLinux ? "Linux only" : false,
+  },
+  () => {
+    assert.equal(
+      platform.formatAccelerator("CommandOrControl+Shift+N"),
+      "Ctrl+Shift+N",
+    );
+    assert.equal(platform.formatAccelerator("CmdOrCtrl+Q"), "Ctrl+Q");
+  },
+);
+
+// --- isMac / isWindows / isLinux are mutually exclusive ---
 
 test("isMac and isWindows cannot both be true", () => {
   assert.ok(
     !(platform.isMac && platform.isWindows),
     "isMac and isWindows must not both be true",
   );
+});
+
+test("isMac, isWindows, and isLinux are mutually exclusive", () => {
+  const flags = [platform.isMac, platform.isWindows, platform.isLinux].filter(
+    Boolean,
+  );
+  assert.ok(flags.length <= 1, "at most one platform flag can be true");
 });
