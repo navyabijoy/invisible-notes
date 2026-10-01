@@ -92,6 +92,7 @@ const SETTING_TITLES = {
   appearance: "Appearance",
   shortcuts: "Shortcuts",
   storage: "Storage",
+  updates: "Updates",
   about: "About",
 };
 
@@ -143,6 +144,8 @@ let appVersion = "";
 let formMode = null;
 let renamingId = null;
 let settingsPane = "appearance";
+let autoUpdateEnabled = true;
+let updateStatus = null;
 let menuNoteId = null;
 let noteMenuMode = "root";
 let noteMenuAnchor = null;
@@ -490,6 +493,9 @@ function applySnapshot(snapshot) {
     accent: ACCENTS[snapshot.accent] ? snapshot.accent : "violet",
     effectiveDark: !!snapshot.effectiveDark,
   };
+  if (typeof snapshot.autoUpdate === "boolean") {
+    autoUpdateEnabled = snapshot.autoUpdate;
+  }
   const savedScope = snapshot.listScope;
   if (savedScope === ALL_SCOPE && workspaces.length > 1) {
     listScope = ALL_SCOPE;
@@ -1089,6 +1095,11 @@ function renderSettingsBody() {
     return;
   }
 
+  if (settingsPane === "updates") {
+    renderUpdatesInto(settingsBodyEl);
+    return;
+  }
+
   const kicker = document.createElement("div");
   kicker.className = "about-kicker";
   kicker.textContent = appVersion
@@ -1104,6 +1115,219 @@ function renderSettingsBody() {
   settingsBodyEl.appendChild(kicker);
   settingsBodyEl.appendChild(title);
   settingsBodyEl.appendChild(note);
+}
+
+function renderUpdatesInto(target) {
+  const kicker = document.createElement("div");
+  kicker.className = "about-kicker";
+  kicker.textContent = appVersion
+    ? `Ghost Notes v${appVersion}`
+    : "Ghost Notes";
+  target.appendChild(kicker);
+
+  const title = document.createElement("div");
+  title.className = "about-title";
+  title.textContent = "Updates & Releases";
+  target.appendChild(title);
+
+  const note = document.createElement("p");
+  note.className = "field-note";
+  note.textContent =
+    "Check for newer Ghost Notes releases directly from GitHub Releases.";
+  target.appendChild(note);
+
+  const toggleRow = document.createElement("div");
+  toggleRow.className = "toggle-row";
+
+  const labelWrap = document.createElement("label");
+  labelWrap.htmlFor = "autoUpdateToggle";
+  labelWrap.innerHTML =
+    "<strong>Automatically check for updates</strong><span>Look for newer releases on GitHub when Ghost Notes starts.</span>";
+
+  const switchLabel = document.createElement("label");
+  switchLabel.className = "toggle-switch";
+
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.id = "autoUpdateToggle";
+  checkbox.checked = !!autoUpdateEnabled;
+  checkbox.addEventListener("change", async () => {
+    autoUpdateEnabled = checkbox.checked;
+    await window.manager.setAutoUpdate(checkbox.checked);
+  });
+
+  const slider = document.createElement("span");
+  slider.className = "toggle-slider";
+
+  switchLabel.appendChild(checkbox);
+  switchLabel.appendChild(slider);
+
+  toggleRow.appendChild(labelWrap);
+  toggleRow.appendChild(switchLabel);
+  target.appendChild(toggleRow);
+
+  const checkBtn = document.createElement("button");
+  checkBtn.type = "button";
+  checkBtn.className = "stack-btn";
+  checkBtn.id = "checkUpdatesBtn";
+  checkBtn.innerHTML = `${ICONS.download}<div><strong>Fetch from GitHub Releases</strong><span>Check GitHub for the latest published version.</span></div>`;
+
+  const statusContainer = document.createElement("div");
+  statusContainer.id = "updateStatusArea";
+
+  function renderStatus() {
+    statusContainer.innerHTML = "";
+    if (!updateStatus) return;
+
+    const card = document.createElement("div");
+    card.className = "update-card";
+
+    if (updateStatus.checking) {
+      const badge = document.createElement("div");
+      badge.className = "update-badge muted";
+      badge.textContent = "Checking GitHub…";
+      card.appendChild(badge);
+
+      const msg = document.createElement("p");
+      msg.className = "field-note";
+      msg.style.margin = "0";
+      msg.textContent =
+        "Connecting to GitHub Releases API to fetch latest release...";
+      card.appendChild(msg);
+
+      statusContainer.appendChild(card);
+      return;
+    }
+
+    if (updateStatus.error) {
+      const badge = document.createElement("div");
+      badge.className = "update-badge error";
+      badge.textContent = "Check failed";
+      card.appendChild(badge);
+
+      const msg = document.createElement("p");
+      msg.className = "field-note";
+      msg.style.margin = "0 0 8px";
+      msg.style.color = "var(--danger, #dc2626)";
+      msg.textContent = updateStatus.error;
+      card.appendChild(msg);
+
+      const hint = document.createElement("span");
+      hint.style.fontSize = "11px";
+      hint.style.color = "var(--muted)";
+      hint.textContent = "Check your internet connection or try again.";
+      card.appendChild(hint);
+
+      statusContainer.appendChild(card);
+      return;
+    }
+
+    const res = updateStatus.result;
+    if (!res) return;
+
+    if (res.hasUpdate) {
+      const badge = document.createElement("div");
+      badge.className = "update-badge success";
+      badge.textContent = `Update available: v${res.latestVersion}`;
+      card.appendChild(badge);
+
+      const relTitle = document.createElement("strong");
+      relTitle.style.display = "block";
+      relTitle.style.fontSize = "14px";
+      relTitle.style.marginBottom = "4px";
+      relTitle.textContent = res.releaseName || `Version ${res.latestVersion}`;
+      card.appendChild(relTitle);
+
+      if (res.publishedAt) {
+        const dateSpan = document.createElement("div");
+        dateSpan.style.fontSize = "11px";
+        dateSpan.style.color = "var(--muted)";
+        dateSpan.style.marginBottom = "8px";
+        dateSpan.textContent = `Published on ${new Date(res.publishedAt).toLocaleDateString()}`;
+        card.appendChild(dateSpan);
+      }
+
+      if (res.releaseNotes) {
+        const notesDiv = document.createElement("div");
+        notesDiv.className = "update-notes";
+        notesDiv.textContent = res.releaseNotes;
+        card.appendChild(notesDiv);
+      }
+
+      const actionsDiv = document.createElement("div");
+      actionsDiv.className = "update-actions";
+
+      if (res.downloadUrl) {
+        const dlBtn = document.createElement("button");
+        dlBtn.type = "button";
+        dlBtn.className = "primary-btn";
+        dlBtn.style.padding = "6px 12px";
+        dlBtn.style.fontSize = "12px";
+        dlBtn.textContent = res.assetName
+          ? `Download ${res.assetName}`
+          : "Download update";
+        dlBtn.addEventListener("click", () =>
+          window.manager.openExternal(res.downloadUrl),
+        );
+        actionsDiv.appendChild(dlBtn);
+      }
+
+      const ghBtn = document.createElement("button");
+      ghBtn.type = "button";
+      ghBtn.className = "ghost-btn";
+      ghBtn.style.padding = "6px 12px";
+      ghBtn.style.fontSize = "12px";
+      ghBtn.textContent = "View on GitHub";
+      ghBtn.addEventListener("click", () =>
+        window.manager.openExternal(res.releaseUrl),
+      );
+      actionsDiv.appendChild(ghBtn);
+
+      card.appendChild(actionsDiv);
+    } else {
+      const badge = document.createElement("div");
+      badge.className = "update-badge muted";
+      badge.textContent = "Up to date ✓";
+      card.appendChild(badge);
+
+      const msg = document.createElement("p");
+      msg.className = "field-note";
+      msg.style.margin = "0";
+      msg.textContent = `Ghost Notes v${res.currentVersion} is the latest version available.`;
+      card.appendChild(msg);
+    }
+
+    statusContainer.appendChild(card);
+  }
+
+  checkBtn.addEventListener("click", async () => {
+    checkBtn.disabled = true;
+    updateStatus = { checking: true };
+    renderStatus();
+    try {
+      const res = await window.manager.checkForUpdates();
+      if (res && res.success) {
+        updateStatus = { checking: false, result: res };
+      } else {
+        updateStatus = {
+          checking: false,
+          error: (res && res.error) || "Check failed",
+        };
+      }
+    } catch (err) {
+      updateStatus = {
+        checking: false,
+        error: err.message || "Failed to check for updates",
+      };
+    } finally {
+      checkBtn.disabled = false;
+      renderStatus();
+    }
+  });
+
+  target.appendChild(checkBtn);
+  target.appendChild(statusContainer);
+  renderStatus();
 }
 
 function openSettings(pane) {
@@ -1283,3 +1507,36 @@ async function openShortcutsFromTray() {
 }
 
 window.manager.onShowShortcuts(openShortcutsFromTray);
+
+function openUpdatesFromTray() {
+  openSettings("updates");
+}
+
+window.manager.onShowUpdates(openUpdatesFromTray);
+
+window.manager.onUpdateAvailable((update) => {
+  updateStatus = { checking: false, result: update };
+  if (!settingsEl.hidden && settingsPane === "updates") {
+    renderSettingsBody();
+  }
+});
+
+window.manager
+  .getAutoUpdate()
+  .then((enabled) => {
+    autoUpdateEnabled = !!enabled;
+    if (autoUpdateEnabled && !updateStatus) {
+      window.manager
+        .checkForUpdates()
+        .then((res) => {
+          if (res && res.success) {
+            updateStatus = { checking: false, result: res };
+            if (!settingsEl.hidden && settingsPane === "updates") {
+              renderSettingsBody();
+            }
+          }
+        })
+        .catch(() => {});
+    }
+  })
+  .catch(() => {});
