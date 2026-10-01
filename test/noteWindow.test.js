@@ -261,6 +261,26 @@ test("on macOS: show and restore events do NOT attach extra protection handlers"
   });
 });
 
+test("on Linux: show and restore events do NOT attach extra protection handlers", (t, done) => {
+  const { noteWindow } = loadNoteWindowWithPlatform({
+    isMac: false,
+    isWindows: false,
+    isLinux: true,
+  });
+  const win = noteWindow.createNoteWindow(baseRecord());
+
+  win.once("ready-to-show", () => {
+    win._contentProtection = false;
+    win.emit("show");
+    assert.equal(
+      win._contentProtection,
+      false,
+      "Linux must not have a show listener that re-applies content protection",
+    );
+    done();
+  });
+});
+
 test("a note with visible:false is not shown after ready-to-show", (t, done) => {
   const { noteWindow } = loadNoteWindowWithPlatform({
     isMac: true,
