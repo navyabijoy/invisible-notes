@@ -252,7 +252,7 @@ test("applyLinuxCaptureExclusion does nothing if not on Hyprland", () => {
   let executed = false;
   const result = platform.applyLinuxCaptureExclusion({
     env: {},
-    execFile: () => {
+    exec: () => {
       executed = true;
     },
   });
@@ -272,10 +272,11 @@ test(
 
     const result = platform.applyLinuxCaptureExclusion({
       env: { HYPRLAND_INSTANCE_SIGNATURE: "test_sig" },
-      execFile: (cmd, args, cb) => {
+      exec: (cmd, args, opts, cb) => {
         capturedCmd = cmd;
         capturedArgs = args;
-        cb(null, "ok", "");
+        const callback = typeof opts === "function" ? opts : cb;
+        callback(null, "ok", "");
       },
       callback: (err, success) => {
         callbackResult = { err, success };
@@ -287,8 +288,32 @@ test(
     assert.deepEqual(capturedArgs, [
       "keyword",
       "windowrule",
-      "no_screen_share on, match:class ^(invisible-notes|Ghost Notes)$",
+      "no_screen_share on, match:class ^(invisible-notes)$",
     ]);
     assert.equal(callbackResult.success, true);
+  },
+);
+
+test(
+  "applyLinuxCaptureExclusion reports error when hyprctl fails",
+  {
+    skip: !platform.isLinux ? "Linux only" : false,
+  },
+  () => {
+    let callbackResult = null;
+
+    platform.applyLinuxCaptureExclusion({
+      env: { HYPRLAND_INSTANCE_SIGNATURE: "test_sig" },
+      exec: (cmd, args, opts, cb) => {
+        const callback = typeof opts === "function" ? opts : cb;
+        callback(new Error("no hyprctl"));
+      },
+      callback: (err, success) => {
+        callbackResult = { err, success };
+      },
+    });
+
+    assert.equal(callbackResult.success, false);
+    assert.match(String(callbackResult.err), /no hyprctl/);
   },
 );
