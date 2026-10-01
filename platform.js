@@ -1,3 +1,5 @@
+const { execFile } = require("child_process");
+
 const isMac = process.platform === "darwin";
 const isWindows = process.platform === "win32";
 const isLinux = process.platform === "linux";
@@ -62,15 +64,52 @@ function formatAccelerator(accelerator) {
 
 function setPinned(win, pinned) {
   if (pinned) {
-    win.setAlwaysOnTop(true, "screen-saver");
-    if (isMac) {
-      win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreenSpaces: true });
-    } else if (isLinux) {
+    if (isLinux) {
+      // On Linux/X11/XWayland, 'screen-saver' level can fail to set _NET_WM_STATE_ABOVE; 'normal' works reliably.
+      win.setAlwaysOnTop(true, "normal");
       win.setVisibleOnAllWorkspaces(true);
+    } else if (isMac) {
+      win.setAlwaysOnTop(true, "screen-saver");
+      win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreenSpaces: true });
+    } else {
+      win.setAlwaysOnTop(true, "screen-saver");
     }
   } else {
     win.setAlwaysOnTop(false);
     if (isMac || isLinux) win.setVisibleOnAllWorkspaces(false);
+  }
+}
+
+function applyLinuxCaptureExclusion(options = {}) {
+  const env = options.env || process.env;
+  const exec = options.execFile || execFile;
+  const callback = options.callback || (() => {});
+
+  if (!isLinux || !env.HYPRLAND_INSTANCE_SIGNATURE) {
+    callback(null, false);
+    return false;
+  }
+
+  try {
+    exec(
+      "hyprctl",
+      [
+        "keyword",
+        "windowrule",
+        "no_screen_share on, match:class ^(invisible-notes|Ghost Notes)$",
+      ],
+      (err) => {
+        if (err) {
+          callback(err, false);
+        } else {
+          callback(null, true);
+        }
+      },
+    );
+    return true;
+  } catch (err) {
+    callback(err, false);
+    return false;
   }
 }
 
@@ -79,7 +118,7 @@ function captureExclusionCaveat() {
     return "Screen-capture exclusion requires Windows 10 (build 19041) or later. On older Windows versions, notes may be visible to screen recordings.";
   }
   if (isLinux) {
-    return "Screen-capture exclusion is not supported on Linux. Notes may be visible to screen recordings.";
+    return "Screen-capture exclusion on Linux requires compositor support (e.g. Hyprland or KDE Plasma 6.6+). On standard X11/GNOME, notes may be visible in recordings.";
   }
   return null;
 }
@@ -92,5 +131,6 @@ module.exports = {
   isCommandOrControlPressed,
   formatAccelerator,
   setPinned,
+  applyLinuxCaptureExclusion,
   captureExclusionCaveat,
 };
