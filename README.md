@@ -1,4 +1,4 @@
-# Ghost Notes (macOS,Windows)
+# Ghost Notes (macOS, Windows, Linux)
 
 ![Downloads](https://img.shields.io/github/downloads/navyabijoy/invisible-notes/total)
 
@@ -58,16 +58,44 @@ Each note remembers which display it was on. If a monitor is disconnected, or a 
 
 ## Platform support & known limitations
 
-Ghost Notes is built to work on both macOS and Windows, but a couple of OS-level behaviors are genuinely not identical — documented here rather than silently assumed:
+Ghost Notes is built to work on macOS, Windows, and Linux, but a couple of OS-level behaviors are genuinely not identical — documented here rather than silently assumed:
 
-| Behavior                                                | macOS                                                             | Windows                                                                                                                                                               |
-| ------------------------------------------------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Screen-capture exclusion                                | Reliable across QuickTime, native recording, Zoom/Meet/Teams, OBS | Requires Windows 10 build 19041 (May 2020 Update) or later. On older Windows builds, notes may be visible to screen recordings — this is an OS limitation, not a bug. |
-| Visible over fullscreen apps you're sharing             | Yes (`visibleOnFullScreenSpaces`)                                 | No native equivalent — Windows has no per-app virtual-desktop concept like macOS Spaces. Always-on-top still applies otherwise.                                       |
-| Tray icon                                               | Adaptive light/dark menu bar icon                                 | Standard system tray icon                                                                                                                                             |
-| Click-through, drag, resize, multi-monitor, DPI scaling | Cross-platform via Electron APIs                                  | Same                                                                                                                                                                  |
+| Behavior                                                | macOS                                                             | Windows                                                                                                                                                               | Linux                                                                                                                                                                                                                                                                                |
+| ------------------------------------------------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Screen-capture exclusion                                | Reliable across QuickTime, native recording, Zoom/Meet/Teams, OBS | Requires Windows 10 build 19041 (May 2020 Update) or later. On older Windows builds, notes may be visible to screen recordings — this is an OS limitation, not a bug. | Compositor-dependent. Ghost Notes automatically sets `no_screen_share` window rules on Hyprland (rendered as a black box/cutout in capture). Native window exclusion is supported on KDE Plasma 6.6+ and niri. On standard X11 or GNOME Wayland, notes may be visible in recordings. |
+| Visible over fullscreen apps you're sharing             | Yes (`visibleOnFullScreenSpaces`)                                 | No native equivalent — Windows has no per-app virtual-desktop concept like macOS Spaces. Always-on-top still applies otherwise.                                       | Yes across workspaces (`setVisibleOnAllWorkspaces` and standard `_NET_WM_STATE_ABOVE` always-on-top).                                                                                                                                                                                |
+| Tray icon                                               | Adaptive light/dark menu bar icon                                 | Standard system tray icon                                                                                                                                             | Standard system tray / AppIndicator icon                                                                                                                                                                                                                                             |
+| Click-through, drag, resize, multi-monitor, DPI scaling | Cross-platform via Electron APIs                                  | Same                                                                                                                                                                  | Same                                                                                                                                                                                                                                                                                 |
 
-If you hit different behavior on Windows than described here, please open an issue with your Windows build number.
+If you hit different behavior on your platform than described here, please open an issue with your OS build and desktop environment/compositor details.
+
+### Linux
+
+Electron has no native content protection on Linux, so exclusion comes from the compositor:
+
+| Compositor        | What happens                                                                                                                                                             |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Hyprland          | On launch the app adds the `no_screen_share` window rule for its own window class. A note stays visible on your screen, and captures show a black rectangle where it is. |
+| KDE Plasma 6.6+   | Right-click the note window → More Actions → Hide from Screencast. KWin leaves the window out of the screencast, so the recording shows the desktop behind it.           |
+| niri              | `block-out-from "screen-capture"` in a window rule draws a black rectangle over the note in captures.                                                                    |
+| GNOME, X11, other | No mechanism, so notes appear in recordings.                                                                                                                             |
+
+The Hyprland rule lives in the running config and a compositor reload clears it. To keep it, add the same rule to your Hyprland configuration:
+
+```ini
+windowrule {
+  name = ghost-notes-hide
+  match:class = ^(invisible-notes)$
+  no_screen_share = true
+}
+```
+
+A black box hides the note's content while still showing that something is hidden there. Hyprland does not re-render captures without the window, so a transparent hole is not available there. A recorder running as root that reads the display straight from the kernel captures the note as it appears on screen, which no Linux app can prevent.
+
+#### AppImage notes
+
+- The build needs glibc 2.25 or later, so it runs on Ubuntu 17.04+, Debian 10+, RHEL 8+, and Fedora 27+.
+- Distributions that restrict unprivileged user namespaces (Ubuntu 23.10 and later with AppArmor) stop Electron's sandbox from starting inside an AppImage. Launch it with `--no-sandbox` there, or install an AppArmor profile for it.
 
 ## Privacy
 
@@ -81,6 +109,14 @@ If you hit different behavior on Windows than described here, please open an iss
 ```bash
 npm run dist:mac    # macOS .dmg / .zip
 npm run dist:win    # Windows installer (.exe via NSIS)
+npm run dist:linux  # Linux .AppImage / .tar.gz
+```
+
+On Linux, make the AppImage executable before launching:
+
+```bash
+chmod +x "Ghost Notes-1.2.2.AppImage"
+./"Ghost Notes-1.2.2.AppImage"
 ```
 
 Windows builds are currently unsigned — Windows SmartScreen may warn on first run until code-signing is set up.

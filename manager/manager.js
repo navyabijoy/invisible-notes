@@ -12,6 +12,7 @@ const {
   STORE_VERSION,
   normalizeImport,
 } = require("../store");
+const updater = require("../updater");
 
 const MAX_TITLE_LENGTH = 80;
 
@@ -34,6 +35,7 @@ function createManagerModule({ store, actions, theme }) {
       listScope: store.listScope(),
       theme: store.getTheme(),
       accent: store.getAccent(),
+      autoUpdate: store.getAutoUpdate(),
       sidebarOpen: store.isSidebarOpen(),
       effectiveDark: theme ? theme.effectiveDark() : false,
     };
@@ -45,12 +47,20 @@ function createManagerModule({ store, actions, theme }) {
     }
   }
 
+  function notifyUpdateAvailable(updateInfo) {
+    if (win && !win.isDestroyed()) {
+      win.webContents.send("manager:updateAvailable", updateInfo);
+    }
+  }
+
   function openManagerWindow(options = {}) {
     const showShortcuts = !!options.showShortcuts;
+    const showUpdates = !!options.showUpdates;
     if (win && !win.isDestroyed()) {
       win.show();
       win.focus();
       if (showShortcuts) win.webContents.send("manager:showShortcuts");
+      if (showUpdates) win.webContents.send("manager:showUpdates");
       return;
     }
     win = new BrowserWindow({
@@ -59,6 +69,7 @@ function createManagerModule({ store, actions, theme }) {
       minWidth: 560,
       minHeight: 420,
       title: "Notes Manager",
+      icon: path.join(__dirname, "..", "build", "icon.png"),
       show: false,
       webPreferences: {
         preload: path.join(__dirname, "manager-preload.js"),
@@ -78,6 +89,10 @@ function createManagerModule({ store, actions, theme }) {
     if (showShortcuts) {
       win.webContents.once("did-finish-load", () =>
         win.webContents.send("manager:showShortcuts"),
+      );
+    } else if (showUpdates) {
+      win.webContents.once("did-finish-load", () =>
+        win.webContents.send("manager:showUpdates"),
       );
     }
     win.on("closed", () => {
@@ -140,6 +155,37 @@ function createManagerModule({ store, actions, theme }) {
 
   ipcMain.on("manager:openHelp", () => {
     shell.openExternal("https://github.com/navyabijoy/invisible-notes/issues");
+  });
+
+  ipcMain.handle("manager:checkForUpdates", async () => {
+    const res = await updater.checkForUpdates(app.getVersion());
+    if (actions.onUpdateStatus) actions.onUpdateStatus(res);
+    return res;
+  });
+
+  ipcMain.handle("manager:getAutoUpdate", () => {
+    return store.getAutoUpdate();
+  });
+
+  ipcMain.handle("manager:setAutoUpdate", (e, enabled) => {
+    const val = store.setAutoUpdate(enabled);
+    notifyChanged();
+    return val;
+  });
+
+  ipcMain.on("manager:openExternal", (e, url) => {
+    if (typeof url !== "string") return;
+    try {
+      const parsed = new URL(url);
+      if (
+        parsed.protocol === "https:" &&
+        (parsed.hostname === "github.com" ||
+          parsed.hostname === "objects.githubusercontent.com" ||
+          parsed.hostname.endsWith(".github.com"))
+      ) {
+        shell.openExternal(url);
+      }
+    } catch (_) {}
   });
 
   ipcMain.on("manager:createWorkspace", (e, name) => {
@@ -334,7 +380,7 @@ function createManagerModule({ store, actions, theme }) {
     };
   });
 
-  return { openManagerWindow, notifyChanged };
+  return { openManagerWindow, notifyChanged, notifyUpdateAvailable };
 }
 
 module.exports = { createManagerModule };

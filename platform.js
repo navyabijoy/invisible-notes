@@ -1,5 +1,8 @@
+const { execFile } = require("child_process");
+
 const isMac = process.platform === "darwin";
 const isWindows = process.platform === "win32";
+const isLinux = process.platform === "linux";
 
 function hideDockIconIfMac(app) {
   if (isMac && app.dock) app.dock.hide();
@@ -61,12 +64,55 @@ function formatAccelerator(accelerator) {
 
 function setPinned(win, pinned) {
   if (pinned) {
-    win.setAlwaysOnTop(true, "screen-saver");
-    if (isMac)
+    if (isLinux) {
+      // On Linux/X11/XWayland, 'screen-saver' level can fail to set _NET_WM_STATE_ABOVE; 'normal' works reliably.
+      win.setAlwaysOnTop(true, "normal");
+      win.setVisibleOnAllWorkspaces(true);
+    } else if (isMac) {
+      win.setAlwaysOnTop(true, "screen-saver");
       win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreenSpaces: true });
+    } else {
+      win.setAlwaysOnTop(true, "screen-saver");
+    }
   } else {
     win.setAlwaysOnTop(false);
-    if (isMac) win.setVisibleOnAllWorkspaces(false);
+    if (isMac || isLinux) win.setVisibleOnAllWorkspaces(false);
+  }
+}
+
+function applyLinuxCaptureExclusion({
+  env = process.env,
+  exec = execFile,
+  execFile: legacyExecFile,
+  callback,
+} = {}) {
+  const runner = legacyExecFile || exec;
+  const done = (error, applied) => {
+    if (callback) callback(error, applied);
+  };
+
+  if (!isLinux || !env.HYPRLAND_INSTANCE_SIGNATURE) {
+    done(null, false);
+    return false;
+  }
+
+  try {
+    runner(
+      "hyprctl",
+      [
+        "keyword",
+        "windowrule",
+        "no_screen_share on, match:class ^(invisible-notes)$",
+      ],
+      { env, timeout: 2000 },
+      (err) => {
+        done(err || null, !err);
+      },
+    );
+    return true;
+  } catch (err) {
+    done(err, false);
+    return false;
   }
 }
 
@@ -74,15 +120,20 @@ function captureExclusionCaveat() {
   if (isWindows) {
     return "Screen-capture exclusion requires Windows 10 (build 19041) or later. On older Windows versions, notes may be visible to screen recordings.";
   }
+  if (isLinux) {
+    return "On Linux, Hyprland captures show a black box where a note is while the note stays on screen. KDE Plasma 6.6 and later can leave a window out of screencasts the same way. Other desktops have no mechanism.";
+  }
   return null;
 }
 
 module.exports = {
   isMac,
   isWindows,
+  isLinux,
   hideDockIconIfMac,
   isCommandOrControlPressed,
   formatAccelerator,
   setPinned,
+  applyLinuxCaptureExclusion,
   captureExclusionCaveat,
 };

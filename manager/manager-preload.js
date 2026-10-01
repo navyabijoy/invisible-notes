@@ -30,4 +30,12 @@ contextBridge.exposeInMainWorld("manager", {
   setSidebarOpen: (isOpen) =>
     ipcRenderer.send("manager:setSidebarOpen", !!isOpen),
   openHelp: () => ipcRenderer.send("manager:openHelp"),
+  onShowUpdates: (cb) => ipcRenderer.on("manager:showUpdates", () => cb()),
+  checkForUpdates: () => ipcRenderer.invoke("manager:checkForUpdates"),
+  getAutoUpdate: () => ipcRenderer.invoke("manager:getAutoUpdate"),
+  setAutoUpdate: (enabled) =>
+    ipcRenderer.invoke("manager:setAutoUpdate", enabled),
+  openExternal: (url) => ipcRenderer.send("manager:openExternal", url),
+  onUpdateAvailable: (cb) =>
+    ipcRenderer.on("manager:updateAvailable", (e, update) => cb(update)),
 });

@@ -2,7 +2,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const STORE_VERSION = 7;
+const STORE_VERSION = 8;
 
 const {
   DEFAULT_NOTE_WIDTH,
@@ -138,6 +138,7 @@ function emptyStore() {
       listScope: workspace.id,
       theme: DEFAULT_THEME,
       accent: DEFAULT_ACCENT,
+      autoUpdate: true,
       sidebarOpen: false,
       shortcuts: {},
     },
@@ -185,6 +186,10 @@ function normalizeWorkspaces(data) {
       listScope: sanitizeListScope(data.settings?.listScope, ids, activeId),
       theme: sanitizeTheme(data.settings?.theme),
       accent: sanitizeAccent(data.settings?.accent),
+      autoUpdate:
+        typeof data.settings?.autoUpdate === "boolean"
+          ? data.settings.autoUpdate
+          : true,
       sidebarOpen:
         typeof data.settings?.sidebarOpen === "boolean"
           ? data.settings.sidebarOpen
@@ -214,7 +219,13 @@ function migrate(data) {
       pinned: n.pinned !== undefined ? !!n.pinned : true,
       monospace: !!n.monospace,
     }));
-  } else if (data.version === 3 || data.version === 4 || data.version === 5) {
+  } else if (
+    data.version === 3 ||
+    data.version === 4 ||
+    data.version === 5 ||
+    data.version === 6 ||
+    data.version === 7
+  ) {
     notes = sourceNotes.map((n) => ({ ...n, monospace: !!n.monospace }));
   } else {
     notes = sourceNotes;
@@ -459,6 +470,20 @@ class NoteStore {
     this.data.settings.accent = clean;
     this.save();
     return clean;
+  }
+
+  getAutoUpdate() {
+    return typeof this.data.settings?.autoUpdate === "boolean"
+      ? this.data.settings.autoUpdate
+      : true;
+  }
+
+  setAutoUpdate(enabled) {
+    const val = !!enabled;
+    if (this.data.settings.autoUpdate === val) return val;
+    this.data.settings.autoUpdate = val;
+    this.save();
+    return val;
   }
 
   workspaces() {

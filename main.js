@@ -29,6 +29,7 @@ const {
   applyOverrides,
 } = require("./manager/shortcuts");
 const { createManagerModule } = require("./manager/manager");
+const updater = require("./updater");
 
 // User-facing save errors; stack traces stay in the console.
 let writeErrorShown = false;
@@ -36,6 +37,7 @@ let writeErrorShown = false;
 // Store and manager are created in app.whenReady() once safeStorage is available.
 let store = null;
 let manager = null;
+let latestUpdateInfo = null;
 
 // OS-backed encryption for notes.json, or plaintext if the platform cannot encrypt.
 function createStoreCodec() {
@@ -165,6 +167,12 @@ function createManager() {
         unregisterFallbackShortcut(globalShortcut);
         registerFallbackShortcut(globalShortcut, () => createNoteNearCursor());
         updateTrayMenu();
+      },
+      onUpdateStatus: (result) => {
+        if (result && result.hasUpdate) {
+          latestUpdateInfo = result;
+          updateTrayMenu();
+        }
       },
     },
   });
@@ -621,6 +629,14 @@ function updateTrayMenu() {
       accelerator: accelerator.openManager,
       click: () => manager.openManagerWindow(),
     },
+    ...(latestUpdateInfo && latestUpdateInfo.hasUpdate
+      ? [
+          {
+            label: `Update Available (v${latestUpdateInfo.latestVersion})…`,
+            click: () => manager.openManagerWindow({ showUpdates: true }),
+          },
+        ]
+      : []),
     { type: "separator" },
     {
       label: `Workspace: ${activeWorkspace ? activeWorkspace.name : "(none)"}`,
@@ -686,6 +702,7 @@ if (!gotLock) {
 
   app.whenReady().then(() => {
     platform.hideDockIconIfMac(app);
+    platform.applyLinuxCaptureExclusion();
 
     store = createStore();
     applyOverrides(store.getShortcutOverrides());
@@ -714,6 +731,19 @@ if (!gotLock) {
 
     powerMonitor.on("resume", reconcileOpenWindowsAfterSystemChange);
     powerMonitor.on("unlock-screen", reconcileOpenWindowsAfterSystemChange);
+
+    if (store.getAutoUpdate()) {
+      setTimeout(async () => {
+        try {
+          const res = await updater.checkForUpdates(app.getVersion());
+          if (res && res.hasUpdate) {
+            latestUpdateInfo = res;
+            updateTrayMenu();
+            if (manager) manager.notifyUpdateAvailable(res);
+          }
+        } catch (_) {}
+      }, 3000);
+    }
   });
 
   app.on("before-quit", () => {
