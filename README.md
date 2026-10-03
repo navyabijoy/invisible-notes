@@ -23,9 +23,8 @@ Demoing a take-home assignment? Giving a code walkthrough while sharing your scr
 
 **Private. Local. Lightweight.** No account, no cloud, no telemetry on note content. Your notes never leave your computer.
 
-<p align="center">
-  <img src="docs/assets/notes-manager.png" alt="Ghost Notes — Notes Manager" width="760" />
-</p>
+<img width="906" height="667" alt="image" src="https://github.com/user-attachments/assets/c920a333-6d6c-46cd-a14a-700a05310e87" />
+
 
 <p align="center"><sub>The Notes Manager — every note you've ever written, searchable, with workspaces, backup and shortcuts.</sub></p>
 
@@ -63,6 +62,7 @@ Demoing a take-home assignment? Giving a code walkthrough while sharing your scr
 - **Workspaces** — group notes (e.g. "Interview", "Personal") and switch between them from the tray or the manager sidebar.
 - **Customizable shortcuts** — every shortcut can be rebound in-app, or reset to defaults.
 - **Click-through mode** — let clicks pass straight through a note while you keep reading it.
+- **Collapse to bubble** — shrink any note into a small floating dot with one click; drag the dot to reposition it, click it to restore the full note. Content stays intact and invisible while collapsed.
 - **Multi-monitor aware** — each note remembers its display; off-screen notes are recovered automatically.
 - **Local & offline** — one JSON file in your OS app-data folder, optionally encrypted with the OS keychain.
 
@@ -103,7 +103,7 @@ Content protection is applied before a note is first shown and re-applied after 
 
 ## Usage
 
-### Note Controls
+### Note controls
 
 Hover a note to reveal its top bar:
 
@@ -117,6 +117,7 @@ Hover a note to reveal its top bar:
 | 📌 Pin              | **Pinned (default):** always on top, even when you switch apps. **Unpinned:** behaves like a normal window.           |
 | 👻 Ghost            | Click-through mode — clicks pass to whatever is behind the note. Hover the bar to interact again.                     |
 | ＋                  | Creates a new note.                                                                                                   |
+| −                   | **Collapse** — shrinks the note into a small floating bubble. The bubble stays screen-capture-excluded and draggable. Click it to restore the full note. |
 | ✕                   | **Hides** the note — it does _not_ delete it. It stays in the Notes Manager and can be reopened any time.             |
 
 Permanently deleting a note is only possible from the **Notes Manager** (with a confirmation prompt).
@@ -230,6 +231,12 @@ Screen-capture exclusion needs Windows 10 build 19041 or newer. Check with `winv
 <summary><b>A note vanished</b></summary>
 
 Notes are hidden, not deleted (unless you deleted them in the Manager). Press `Cmd/Ctrl+Shift+H` to show all, or open the **Notes Manager** — everything you've ever created is listed there.
+</details>
+
+<details>
+<summary><b>I only see a small dot — where did my note go?</b></summary>
+
+The note is collapsed into a floating bubble. Click the dot once to restore it to full size. You can also drag the bubble to reposition it before restoring.
 </details>
 
 ## Development
