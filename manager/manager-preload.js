@@ -27,6 +27,7 @@ contextBridge.exposeInMainWorld("manager", {
   importNotes: () => ipcRenderer.invoke("manager:import"),
   setTheme: (mode) => ipcRenderer.send("manager:setTheme", mode),
   setAccent: (id) => ipcRenderer.send("manager:setAccent", id),
+  setToolbarMode: (mode) => ipcRenderer.send("manager:setToolbarMode", mode),
   setSidebarOpen: (isOpen) =>
     ipcRenderer.send("manager:setSidebarOpen", !!isOpen),
   openHelp: () => ipcRenderer.send("manager:openHelp"),

@@ -35,6 +35,7 @@ function createManagerModule({ store, actions, theme }) {
       theme: store.getTheme(),
       accent: store.getAccent(),
       sidebarOpen: store.isSidebarOpen(),
+      toolbarMode: store.getToolbarMode(),
       effectiveDark: theme ? theme.effectiveDark() : false,
     };
   }
@@ -173,6 +174,11 @@ function createManagerModule({ store, actions, theme }) {
   ipcMain.on("manager:setAccent", (e, id) => {
     if (typeof id !== "string") return;
     if (actions.setAccent) actions.setAccent(id);
+  });
+
+  ipcMain.on("manager:setToolbarMode", (e, mode) => {
+    if (typeof mode !== "string") return;
+    if (actions.setToolbarMode) actions.setToolbarMode(mode);
   });
 
   ipcMain.on("manager:deleteWorkspace", async (e, id) => {

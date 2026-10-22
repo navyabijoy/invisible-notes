@@ -41,7 +41,10 @@ let state = {
 };
 
 const noteEl = document.querySelector(".note");
-const barEl = document.querySelector(".bar");
+
+let toolbarMode = "always";
+let toolbarTimer = null;
+let checkingToolbar = false;
 
 // --- Click-through ("ghost") mode ---
 // When on, the note ignores mouse events (clicks reach whatever is behind it),
@@ -79,6 +82,59 @@ window.addEventListener("mousemove", (e) => {
   // Re-enable interaction only while hovering the toolbar.
   setIgnore(!e.target.closest(".bar"));
 });
+
+// --- Toolbar visibility mode ---
+function applyToolbarMode(mode) {
+  clearInterval(toolbarTimer);
+  toolbarTimer = null;
+  toolbarMode = mode;
+  noteEl.classList.toggle("toolbar-hover", mode === "hover");
+  noteEl.classList.remove("bar-visible");
+  if (mode === "hover") {
+    updateToolbarVisibility();
+    toolbarTimer = setInterval(updateToolbarVisibility, 60);
+  }
+}
+
+// Native cursor coordinates survive drag regions and toolbar animation.
+async function updateToolbarVisibility() {
+  if (toolbarMode !== "hover" || checkingToolbar) return;
+  checkingToolbar = true;
+  try {
+    const cursor = await window.notes.getCursorPosition(id);
+    if (toolbarMode !== "hover") return;
+    const inside =
+      cursor &&
+      cursor.x >= 0 &&
+      cursor.y >= 0 &&
+      cursor.x < cursor.width &&
+      cursor.y < cursor.height;
+    const visible = noteEl.classList.contains("bar-visible");
+    const headerHeight = visible ? 34 : 30;
+    const overPopover =
+      inside &&
+      visible &&
+      [colorPopover, formatPopover].some((popover) => {
+        if (!popover.classList.contains("open")) return false;
+        const rect = popover.getBoundingClientRect();
+        return (
+          cursor.x >= rect.left &&
+          cursor.x < rect.right &&
+          cursor.y >= rect.top &&
+          cursor.y < rect.bottom
+        );
+      });
+    noteEl.classList.toggle(
+      "bar-visible",
+      inside && (cursor.y < headerHeight || overPopover),
+    );
+  } finally {
+    checkingToolbar = false;
+  }
+}
+
+// Live updates broadcast from main when the user changes the setting.
+window.notes.onToolbarMode(applyToolbarMode);
 
 // --- Pin (always-on-top) toggle ---
 // Pinned notes stay above whatever app you switch to, on both macOS and
@@ -396,7 +452,7 @@ document.addEventListener("selectionchange", () => {
             isActive = true;
           }
         }
-      } catch (e) { }
+      } catch (e) {}
 
       if (isActive) {
         btn.classList.add("active");
@@ -832,13 +888,13 @@ function animateCollapse(collapsed) {
     bubble.animate(
       collapsed
         ? [
-          { opacity: 0, transform: "scale(0.65)" },
-          { opacity: 1, transform: "scale(1)" },
-        ]
+            { opacity: 0, transform: "scale(0.65)" },
+            { opacity: 1, transform: "scale(1)" },
+          ]
         : [
-          { opacity: 1, transform: "scale(1)" },
-          { opacity: 0, transform: "scale(0.65)" },
-        ],
+            { opacity: 1, transform: "scale(1)" },
+            { opacity: 0, transform: "scale(0.65)" },
+          ],
       { ...timing, duration: collapsed ? 130 : 90, delay: collapsed ? 90 : 0 },
     ),
   ];
@@ -933,35 +989,36 @@ bubble.addEventListener("click", (event) => {
 window.notes.onToggleGhost(() => setGhost(!state.ghost));
 
 // Load persisted state
-Promise.all([window.notes.getState(id), window.notes.imagesDir()]).then(
-  ([s, dir]) => {
-    if (s) state = Object.assign(state, s);
-    // Older records (pre-v4) may omit this; normalize missing to false
-    // so the renderer always treats monospace as a boolean.
-    state.monospace = !!state.monospace;
-    state.images = Array.isArray(state.images) ? state.images : [];
-    imagesDir = dir;
-    // Any referenced image means the body is markup; treat it as rich so the
-    // <img> tags are parsed instead of being escaped into visible text.
-    if (state.images.some((name) => SAFE_IMAGE_NAME.test(name))) {
-      state.rich = true;
-    }
-    // Records from the pre-rich era kept images outside the text; fold any
-    // unreferenced ones into the body so they stay visible.
-    const missing = state.images.filter(
-      (name) => SAFE_IMAGE_NAME.test(name) && !state.text.includes(name),
-    );
-    if (missing.length > 0) {
-      const markup = missing
-        .map((name) => `<img data-name="${name}">`)
-        .join("");
-      state.text = `${state.text}${state.text ? "<br>" : ""}${markup}`;
-    }
-    applyState();
-    body.classList.add("ready");
-    (state.collapsed ? bubble : textEl).focus();
-  },
-);
+Promise.all([
+  window.notes.getState(id),
+  window.notes.imagesDir(),
+  window.notes.getSettings(),
+]).then(([s, dir, settings]) => {
+  if (s) state = Object.assign(state, s);
+  // Older records (pre-v4) may omit this; normalize missing to false
+  // so the renderer always treats monospace as a boolean.
+  state.monospace = !!state.monospace;
+  state.images = Array.isArray(state.images) ? state.images : [];
+  imagesDir = dir;
+  applyToolbarMode(settings?.toolbarMode || "always");
+  // Any referenced image means the body is markup; treat it as rich so the
+  // <img> tags are parsed instead of being escaped into visible text.
+  if (state.images.some((name) => SAFE_IMAGE_NAME.test(name))) {
+    state.rich = true;
+  }
+  // Records from the pre-rich era kept images outside the text; fold any
+  // unreferenced ones into the body so they stay visible.
+  const missing = state.images.filter(
+    (name) => SAFE_IMAGE_NAME.test(name) && !state.text.includes(name),
+  );
+  if (missing.length > 0) {
+    const markup = missing.map((name) => `<img data-name="${name}">`).join("");
+    state.text = `${state.text}${state.text ? "<br>" : ""}${markup}`;
+  }
+  applyState();
+  body.classList.add("ready");
+  (state.collapsed ? bubble : textEl).focus();
+});
 
 // Markdown Parser
 function parseMarkdownToHTML(text) {

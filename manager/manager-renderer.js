@@ -136,7 +136,12 @@ let workspaces = [];
 let activeWorkspace = null;
 let listScope = null;
 let sidebarOpen = false;
-let appearance = { theme: "system", accent: "violet", effectiveDark: false };
+let appearance = {
+  theme: "system",
+  accent: "violet",
+  effectiveDark: false,
+  toolbarMode: "always",
+};
 let query = "";
 let shortcuts = [];
 let appVersion = "";
@@ -476,6 +481,12 @@ function applyAppearance() {
       String(dot.dataset.accent === appearance.accent),
     );
   });
+  document.querySelectorAll("[data-toolbar-opt]").forEach((btn) => {
+    btn.setAttribute(
+      "aria-pressed",
+      String(btn.dataset.toolbarOpt === appearance.toolbarMode),
+    );
+  });
 }
 
 function applySnapshot(snapshot) {
@@ -489,6 +500,9 @@ function applySnapshot(snapshot) {
       : "system",
     accent: ACCENTS[snapshot.accent] ? snapshot.accent : "violet",
     effectiveDark: !!snapshot.effectiveDark,
+    toolbarMode: ["always", "hover"].includes(snapshot.toolbarMode)
+      ? snapshot.toolbarMode
+      : "always",
   };
   const savedScope = snapshot.listScope;
   if (savedScope === ALL_SCOPE && workspaces.length > 1) {
@@ -1058,6 +1072,28 @@ function renderSettingsBody() {
     }
     accentField.appendChild(wrap);
     settingsBodyEl.appendChild(accentField);
+
+    const toolbarField = document.createElement("div");
+    toolbarField.className = "field";
+    toolbarField.innerHTML = '<div class="field-label">Toolbar</div>';
+    const toolbarSeg = document.createElement("div");
+    toolbarSeg.className = "seg";
+    toolbarSeg.setAttribute("role", "group");
+    toolbarSeg.setAttribute("aria-label", "Toolbar visibility");
+    for (const [val, lbl] of [
+      ["always", "Always visible"],
+      ["hover", "Show on hover"],
+    ]) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.dataset.toolbarOpt = val;
+      btn.textContent = lbl;
+      btn.setAttribute("aria-pressed", String(val === appearance.toolbarMode));
+      btn.addEventListener("click", () => window.manager.setToolbarMode(val));
+      toolbarSeg.appendChild(btn);
+    }
+    toolbarField.appendChild(toolbarSeg);
+    settingsBodyEl.appendChild(toolbarField);
     return;
   }
 

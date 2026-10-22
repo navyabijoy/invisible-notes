@@ -25,7 +25,6 @@ Demoing a take-home assignment? Giving a code walkthrough while sharing your scr
 
 <img width="906" height="667" alt="image" src="https://github.com/user-attachments/assets/c920a333-6d6c-46cd-a14a-700a05310e87" />
 
-
 <p align="center"><sub>The Notes Manager — every note you've ever written, searchable, with workspaces, backup and shortcuts.</sub></p>
 
 ---
@@ -107,18 +106,18 @@ Content protection is applied before a note is first shown and re-applied after 
 
 Hover a note to reveal its top bar:
 
-| Control             | What it does                                                                                                          |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| ⠿ (drag handle)     | Drag to move the note. Drag any edge or corner to resize.                                                             |
-| Color dot           | Opens the palette — pick the note's color.                                                                            |
-| Opacity slider      | Fades the note from 30% to 100%.                                                                                      |
-| **Aa** (Formatting) | Bold / italic / underline / strikethrough, headings, quote, bullet/numbered/check lists, text colors, `{}` monospace. |
-| `A−` / `A+`         | Smaller / larger text.                                                                                                |
-| 📌 Pin              | **Pinned (default):** always on top, even when you switch apps. **Unpinned:** behaves like a normal window.           |
-| 👻 Ghost            | Click-through mode — clicks pass to whatever is behind the note. Hover the bar to interact again.                     |
-| ＋                  | Creates a new note.                                                                                                   |
+| Control             | What it does                                                                                                                                             |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ⠿ (drag handle)     | Drag to move the note. Drag any edge or corner to resize.                                                                                                |
+| Color dot           | Opens the palette — pick the note's color.                                                                                                               |
+| Opacity slider      | Fades the note from 30% to 100%.                                                                                                                         |
+| **Aa** (Formatting) | Bold / italic / underline / strikethrough, headings, quote, bullet/numbered/check lists, text colors, `{}` monospace.                                    |
+| `A−` / `A+`         | Smaller / larger text.                                                                                                                                   |
+| 📌 Pin              | **Pinned (default):** always on top, even when you switch apps. **Unpinned:** behaves like a normal window.                                              |
+| 👻 Ghost            | Click-through mode — clicks pass to whatever is behind the note. Hover the bar to interact again.                                                        |
+| ＋                  | Creates a new note.                                                                                                                                      |
 | −                   | **Collapse** — shrinks the note into a small floating bubble. The bubble stays screen-capture-excluded and draggable. Click it to restore the full note. |
-| ✕                   | **Hides** the note — it does _not_ delete it. It stays in the Notes Manager and can be reopened any time.             |
+| ✕                   | **Hides** the note — it does _not_ delete it. It stays in the Notes Manager and can be reopened any time.                                                |
 
 Permanently deleting a note is only possible from the **Notes Manager** (with a confirmation prompt).
 

@@ -15,4 +15,8 @@ contextBridge.exposeInMainWorld("notes", {
   saveImage: (id, type, bytes) =>
     ipcRenderer.invoke("note:saveImage", { id, type, bytes }),
   onToggleGhost: (cb) => ipcRenderer.on("note:toggleGhost", cb),
+  getSettings: () => ipcRenderer.invoke("note:getSettings"),
+  getCursorPosition: (id) => ipcRenderer.invoke("note:getCursorPosition", id),
+  onToolbarMode: (cb) =>
+    ipcRenderer.on("note:toolbarMode", (e, mode) => cb(mode)),
 });

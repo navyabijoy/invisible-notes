@@ -139,6 +139,20 @@ function setAccentId(id) {
   return clean;
 }
 
+function broadcastToolbarMode(mode) {
+  for (const win of noteWindows.values()) {
+    if (!win.isDestroyed()) win.webContents.send("note:toolbarMode", mode);
+  }
+}
+
+function setToolbarMode(mode) {
+  if (!store || !manager) return null;
+  const clean = store.setToolbarMode(mode);
+  broadcastToolbarMode(clean);
+  manager.notifyChanged();
+  return clean;
+}
+
 function createManager() {
   return createManagerModule({
     store,
@@ -163,6 +177,7 @@ function createManager() {
       importNotes: (records, mode) => importNotes(records, mode),
       setTheme: (mode) => setThemeMode(mode),
       setAccent: (id) => setAccentId(id),
+      setToolbarMode: (mode) => setToolbarMode(mode),
       onShortcutsUpdated: () => {
         unregisterFallbackShortcut(globalShortcut);
         registerFallbackShortcut(globalShortcut, () => createNoteNearCursor());
@@ -512,6 +527,30 @@ ipcMain.on("note:setPinned", (e, { id, pinned }) => {
 });
 
 ipcMain.handle("note:getState", (e, id) => store.get(id));
+
+ipcMain.handle("note:getSettings", () => ({
+  toolbarMode: store.getToolbarMode(),
+}));
+
+ipcMain.handle("note:getCursorPosition", (e, id) => {
+  if (typeof id !== "string") return null;
+  const win = noteWindows.get(id);
+  if (
+    !win ||
+    win.isDestroyed() ||
+    win.webContents !== e.sender ||
+    !win.isVisible()
+  )
+    return null;
+  const cursor = screen.getCursorScreenPoint();
+  const bounds = win.getContentBounds();
+  return {
+    x: cursor.x - bounds.x,
+    y: cursor.y - bounds.y,
+    width: bounds.width,
+    height: bounds.height,
+  };
+});
 
 // ---------- Pasted images ----------
 ipcMain.handle("note:imagesDir", () => getImagesDir());
