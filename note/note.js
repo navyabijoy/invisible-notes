@@ -396,7 +396,7 @@ document.addEventListener("selectionchange", () => {
             isActive = true;
           }
         }
-      } catch (e) { }
+      } catch (e) {}
 
       if (isActive) {
         btn.classList.add("active");
@@ -832,13 +832,13 @@ function animateCollapse(collapsed) {
     bubble.animate(
       collapsed
         ? [
-          { opacity: 0, transform: "scale(0.65)" },
-          { opacity: 1, transform: "scale(1)" },
-        ]
+            { opacity: 0, transform: "scale(0.65)" },
+            { opacity: 1, transform: "scale(1)" },
+          ]
         : [
-          { opacity: 1, transform: "scale(1)" },
-          { opacity: 0, transform: "scale(0.65)" },
-        ],
+            { opacity: 1, transform: "scale(1)" },
+            { opacity: 0, transform: "scale(0.65)" },
+          ],
       { ...timing, duration: collapsed ? 130 : 90, delay: collapsed ? 90 : 0 },
     ),
   ];
