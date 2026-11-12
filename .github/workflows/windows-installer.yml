@@ -6,6 +6,7 @@ on:
       - feat/independent-note-columns
     paths:
       - ".github/workflows/windows-installer.yml"
+      - ".gitattributes"
       - "note/**"
       - "main.js"
       - "store.js"
