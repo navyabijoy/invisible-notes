@@ -589,7 +589,7 @@ test("v7 notes migrate to expanded without changing their geometry", () => {
     ],
   });
   const note = store.get("legacy");
-  assert.equal(store.data.version, 8);
+  assert.equal(store.data.version, STORE_VERSION);
   assert.equal(note.collapsed, false);
   assert.equal(note.width, 400);
   assert.equal(note.height, 300);
@@ -616,4 +616,30 @@ test("collapsed notes survive reload and export/import with expanded dimensions"
   assert.equal(imported[0].collapsed, true);
   assert.equal(imported[0].width, 420);
   assert.equal(imported[0].text, "private");
+});
+
+test("v8 notes keep their text on the left and gain an empty right column", () => {
+  const store = freshStore({
+    version: 8,
+    notes: [{ id: "old", text: "Left", rich: true }],
+  });
+  assert.equal(store.get("old").text, "Left");
+  assert.equal(store.get("old").rightText, "");
+  assert.equal(store.data.version, STORE_VERSION);
+});
+
+test("both columns survive reload and backup import independently", () => {
+  const dir = storeDir();
+  const store = openStore(dir);
+  const note = store.create({
+    text: "<b>Left</b>",
+    rightText: "<i>Right</i>",
+    rich: true,
+  });
+  store.flush();
+  const restored = openStore(dir).get(note.id);
+  assert.equal(restored.text, "<b>Left</b>");
+  assert.equal(restored.rightText, "<i>Right</i>");
+  const imported = normalizeImport(JSON.parse(JSON.stringify(store.data)));
+  assert.equal(imported[0].rightText, "<i>Right</i>");
 });

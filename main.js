@@ -453,10 +453,21 @@ function reconcileOpenWindowsAfterSystemChange() {
 // ---------- IPC from renderer ----------
 ipcMain.on("note:update", (e, payload) => {
   if (!payload || typeof payload.id !== "string") return;
-  const { id, text, rich, images, color, opacity, fontSize, monospace, ghost } =
-    payload;
+  const {
+    id,
+    text,
+    rightText,
+    rich,
+    images,
+    color,
+    opacity,
+    fontSize,
+    monospace,
+    ghost,
+  } = payload;
   const patch = {};
   if (typeof text === "string") patch.text = text;
+  if (typeof rightText === "string") patch.rightText = rightText;
   if (typeof rich === "boolean") patch.rich = rich;
   if (Array.isArray(images)) {
     patch.images = images.filter(

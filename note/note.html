@@ -247,9 +247,24 @@
         cursor: pointer;
       }
 
+      .editors {
+        display: flex;
+        flex: 1;
+        min-height: 0;
+      }
+      .column-divider {
+        flex: 0 0 1px;
+        background: rgba(0, 0, 0, 0.25);
+        margin: 10px 0;
+      }
+      body.dark .column-divider {
+        background: rgba(255, 255, 255, 0.3);
+      }
       .editor {
         flex: 1;
-        width: 100%;
+        min-width: 0;
+        min-height: 0;
+        width: 0;
         resize: none;
         border: none;
         outline: none;
@@ -736,16 +751,33 @@
         </button>
         <button class="btn" id="close" title="Close note">✕</button>
       </div>
-      <div
-        id="text"
-        class="editor"
-        contenteditable="true"
-        role="textbox"
-        aria-multiline="true"
-        aria-label="Note text"
-        placeholder="Your private notes… (invisible to screen sharing)"
-        spellcheck="false"
-      ></div>
+      <div class="editors">
+        <div
+          id="text"
+          class="editor"
+          contenteditable="true"
+          role="textbox"
+          aria-multiline="true"
+          aria-label="Left column"
+          placeholder="Your private notes… (invisible to screen sharing)"
+          spellcheck="false"
+        ></div>
+        <div
+          class="column-divider"
+          role="separator"
+          aria-orientation="vertical"
+        ></div>
+        <div
+          id="textRight"
+          class="editor"
+          contenteditable="true"
+          role="textbox"
+          aria-multiline="true"
+          aria-label="Right column"
+          placeholder="Right column…"
+          spellcheck="false"
+        ></div>
+      </div>
     </div>
     <button
       id="bubble"
