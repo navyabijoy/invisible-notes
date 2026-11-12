@@ -194,7 +194,7 @@ function htmlToText(html) {
 }
 
 function snippet(note) {
-  const raw = note.text || "";
+  const raw = [note.text, note.rightText].filter(Boolean).join("\n");
   const plain = note.rich ? htmlToText(raw) : raw;
   return plain.replace(/\s+/g, " ").trim();
 }

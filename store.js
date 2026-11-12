@@ -2,7 +2,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const STORE_VERSION = 8;
+const STORE_VERSION = 9;
 
 const {
   DEFAULT_NOTE_WIDTH,
@@ -92,6 +92,8 @@ function defaultRecord(overrides = {}) {
     id: overrides.id || nextId(),
     title: overrides.title || "",
     text: overrides.text || "",
+    rightText:
+      typeof overrides.rightText === "string" ? overrides.rightText : "",
     color: overrides.color || "yellow",
     x: overrides.x,
     y: overrides.y,
@@ -225,6 +227,12 @@ function migrate(data) {
   notes = notes.map((n) => ({
     ...n,
     images: Array.isArray(n.images) ? n.images : [],
+  }));
+
+  // v9 adds an independent right-hand editor; older text stays on the left.
+  notes = notes.map((n) => ({
+    ...n,
+    rightText: typeof n.rightText === "string" ? n.rightText : "",
   }));
 
   // v8 adds collapsed state; width and height always retain the expanded size.

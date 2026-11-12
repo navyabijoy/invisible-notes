@@ -17,7 +17,20 @@ const COLORS = {
 
 const root = document.documentElement;
 const body = document.body;
-const textEl = document.getElementById("text");
+const editors = [
+  document.getElementById("text"),
+  document.getElementById("textRight"),
+];
+let textEl = editors[0];
+function onEditor(event, handler) {
+  for (const editor of editors) {
+    editor.addEventListener(event, (e) => {
+      textEl = editor;
+      handler(e);
+    });
+  }
+}
+onEditor("focus", () => {});
 const opacityEl = document.getElementById("opacity");
 const swatchesEl = document.getElementById("swatches");
 const colorBtn = document.getElementById("colorBtn");
@@ -30,6 +43,7 @@ const bubble = document.getElementById("bubble");
 
 let state = {
   text: "",
+  rightText: "",
   color: "yellow",
   opacity: 0.85,
   fontSize: 15,
@@ -294,6 +308,8 @@ function normalizeChecklistMarkup() {
   });
 }
 
+formatPopover.addEventListener("mousedown", (e) => e.preventDefault());
+
 formatPopover.addEventListener("click", (e) => {
   const swatch = e.target.closest(".color-swatch");
   if (swatch) {
@@ -338,7 +354,7 @@ formatPopover.addEventListener("click", (e) => {
   push();
 });
 
-textEl.addEventListener("click", (e) => {
+onEditor("click", (e) => {
   const li = e.target.closest('ul[data-type="checklist"] > li');
   if (!li || !textEl.contains(li)) return;
 
@@ -347,7 +363,7 @@ textEl.addEventListener("click", (e) => {
   if (clickX > 24) return;
 
   li.dataset.checked = li.dataset.checked === "true" ? "false" : "true";
-  state.text = sanitizeHTML(textEl.innerHTML);
+  syncStateFromDom();
   push();
 });
 
@@ -446,7 +462,11 @@ function hydrateImage(img) {
 
 function hydrateImages() {
   if (!imagesDir) return;
-  textEl.querySelectorAll("img[data-name]").forEach((img) => hydrateImage(img));
+  for (const editor of editors) {
+    editor
+      .querySelectorAll("img[data-name]")
+      .forEach((img) => hydrateImage(img));
+  }
 }
 
 // Insert a node at the caret, falling back to the end of the editor when the
@@ -469,10 +489,12 @@ function insertAtCaret(node) {
 
 // Persist the editor HTML plus the list of referenced image files.
 function syncStateFromDom() {
-  state.text = sanitizeHTML(textEl.innerHTML);
+  state.text = sanitizeHTML(editors[0].innerHTML);
+  state.rightText = sanitizeHTML(editors[1].innerHTML);
   state.images = [
     ...new Set(
-      [...textEl.querySelectorAll("img[data-name]")]
+      editors
+        .flatMap((editor) => [...editor.querySelectorAll("img[data-name]")])
         .map((img) => img.dataset.name)
         .filter((name) => SAFE_IMAGE_NAME.test(name)),
     ),
@@ -551,7 +573,7 @@ function selectNode(node) {
   sel.addRange(range);
 }
 
-textEl.addEventListener("keydown", (e) => {
+onEditor("keydown", (e) => {
   if (e.key !== "Backspace" && e.key !== "Delete") return;
   const sel = window.getSelection();
   if (!sel.rangeCount) return;
@@ -581,12 +603,12 @@ document.addEventListener("selectionchange", () => {
   });
 });
 
-textEl.addEventListener("click", (e) => {
+onEditor("click", (e) => {
   if (e.target.tagName === "IMG") selectNode(e.target);
 });
 
 // Rich content dropped from other apps would inject markup — block it.
-textEl.addEventListener("drop", (e) => e.preventDefault());
+onEditor("drop", (e) => e.preventDefault());
 
 function sanitizeHTML(html) {
   const parser = new DOMParser();
@@ -685,18 +707,23 @@ function applyState() {
   root.style.setProperty("--font-size", state.fontSize + "px");
   opacityEl.value = Math.round(state.opacity * 100);
 
-  let content = state.text || "";
-  if (state.rich) {
-    content = sanitizeHTML(content);
-  } else {
-    const temp = document.createElement("div");
-    temp.textContent = content; // Escape legacy plain text
-    content = temp.innerHTML.replace(/\n/g, "<br>");
+  for (const [index, editor] of editors.entries()) {
+    let content = (index === 0 ? state.text : state.rightText) || "";
+    if (state.rich) {
+      content = sanitizeHTML(content);
+    } else {
+      const temp = document.createElement("div");
+      temp.textContent = content; // Escape legacy plain text
+      content = temp.innerHTML.replace(/\n/g, "<br>");
+    }
+    if (editor.innerHTML !== content) {
+      editor.innerHTML = content;
+    }
+    const previousEditor = textEl;
+    textEl = editor;
+    normalizeChecklistMarkup();
+    textEl = previousEditor;
   }
-  if (textEl.innerHTML !== content) {
-    textEl.innerHTML = content;
-  }
-  normalizeChecklistMarkup();
   hydrateImages();
 
   applyCollapsed();
@@ -706,10 +733,12 @@ function applyState() {
 }
 
 function push() {
+  syncStateFromDom();
   state.rich = true;
   window.notes.update({
     id,
     text: state.text,
+    rightText: state.rightText,
     rich: state.rich,
     images: state.images,
     color: state.color,
@@ -738,7 +767,7 @@ for (const name of Object.keys(COLORS)) {
 
 // Events
 let inputTimeout;
-textEl.addEventListener("input", () => {
+onEditor("input", () => {
   clearTimeout(inputTimeout);
   inputTimeout = setTimeout(() => {
     syncStateFromDom();
@@ -747,8 +776,9 @@ textEl.addEventListener("input", () => {
 });
 
 // Security/Paste handling
-textEl.addEventListener("paste", async (e) => {
+onEditor("paste", async (e) => {
   if (!e.clipboardData) return;
+  const pasteEditor = textEl;
   const imageItems = [...e.clipboardData.items].filter((i) =>
     i.type.startsWith("image/"),
   );
@@ -756,7 +786,10 @@ textEl.addEventListener("paste", async (e) => {
     e.preventDefault();
     for (const item of imageItems) {
       const file = item.getAsFile();
-      if (file) await saveAndInsertImage(file);
+      if (file) {
+        textEl = pasteEditor;
+        await saveAndInsertImage(file);
+      }
     }
     syncStateFromDom();
     push();
@@ -949,7 +982,10 @@ Promise.all([window.notes.getState(id), window.notes.imagesDir()]).then(
     // Records from the pre-rich era kept images outside the text; fold any
     // unreferenced ones into the body so they stay visible.
     const missing = state.images.filter(
-      (name) => SAFE_IMAGE_NAME.test(name) && !state.text.includes(name),
+      (name) =>
+        SAFE_IMAGE_NAME.test(name) &&
+        !state.text.includes(name) &&
+        !(state.rightText || "").includes(name),
     );
     if (missing.length > 0) {
       const markup = missing
