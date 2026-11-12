@@ -1,0 +1,40 @@
+name: Publish updated Windows exe
+
+on:
+  push:
+    branches:
+      - feat/independent-note-columns
+    paths:
+      - ".github/workflows/publish-windows-exe.yml"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Download verified build artifact
+        run: gh run download 43200284969 --name Ghost-Notes-Windows-Installer --dir installer
+      - name: Prepare exe download
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          files = list(Path("installer").glob("*.exe"))
+          if len(files) != 1:
+              raise SystemExit("Expected exactly one installer")
+          files[0].rename("Ghost-Notes-Columns-Setup.exe")
+          PY
+      - name: Publish direct exe download
+        run: >-
+          gh release create columns-update-43200284969
+          Ghost-Notes-Columns-Setup.exe
+          --repo "$GH_REPO"
+          --target dcff2e9c055ef24a57699d40d7fcc11035b4a5da
+          --title "Ghost Notes - independent columns for Windows"
+          --notes "Windows x64 installer with two independent note columns and a vertical divider. Built from commit dcff2e9c055ef24a57699d40d7fcc11035b4a5da in successful GitHub Actions run 43200284969. This custom installer is unsigned."
