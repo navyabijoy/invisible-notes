@@ -20,6 +20,8 @@ const THEME_MODES = ["light", "dark", "system"];
 const DEFAULT_THEME = "system";
 const ACCENT_IDS = ["violet", "blue", "green", "orange", "pink"];
 const DEFAULT_ACCENT = "violet";
+const TOOLBAR_MODES = ["always", "hover"];
+const DEFAULT_TOOLBAR_MODE = "always";
 
 // List-scope sentinel for every note; new notes still land in the active workspace.
 const ALL_NOTES_SCOPE = "__all__";
@@ -30,6 +32,10 @@ function sanitizeTheme(input) {
 
 function sanitizeAccent(input) {
   return ACCENT_IDS.includes(input) ? input : DEFAULT_ACCENT;
+}
+
+function sanitizeToolbarMode(input) {
+  return TOOLBAR_MODES.includes(input) ? input : DEFAULT_TOOLBAR_MODE;
 }
 
 function sanitizeListScope(value, workspaceIds, activeId) {
@@ -141,6 +147,7 @@ function emptyStore() {
       accent: DEFAULT_ACCENT,
       sidebarOpen: false,
       shortcuts: {},
+      toolbarMode: DEFAULT_TOOLBAR_MODE,
     },
     workspaces: [workspace],
     notes: [],
@@ -191,6 +198,7 @@ function normalizeWorkspaces(data) {
           ? data.settings.sidebarOpen
           : false,
       shortcuts: sanitizeShortcutOverrides(data.settings?.shortcuts),
+      toolbarMode: sanitizeToolbarMode(data.settings?.toolbarMode),
     },
     workspaces,
     notes,
@@ -469,6 +477,18 @@ class NoteStore {
     return clean;
   }
 
+  getToolbarMode() {
+    return sanitizeToolbarMode(this.data.settings.toolbarMode);
+  }
+
+  setToolbarMode(mode) {
+    const clean = sanitizeToolbarMode(mode);
+    if (this.data.settings.toolbarMode === clean) return clean;
+    this.data.settings.toolbarMode = clean;
+    this.save();
+    return clean;
+  }
+
   workspaces() {
     return this.data.workspaces;
   }
@@ -595,5 +615,7 @@ module.exports = {
   ACCENT_IDS,
   DEFAULT_THEME,
   DEFAULT_ACCENT,
+  TOOLBAR_MODES,
+  DEFAULT_TOOLBAR_MODE,
   ALL_NOTES_SCOPE,
 };

@@ -105,8 +105,10 @@
         gap: 6px;
         padding: 0 8px;
         -webkit-app-region: drag;
-        background: rgba(0, 0, 0, 0.06);
-        opacity: 0;
+        background:
+          linear-gradient(rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.06)),
+          rgb(var(--tint));
+        opacity: 1;
         transition: opacity 0.15s ease;
       }
       @media (max-width: 380px) {
@@ -126,8 +128,46 @@
       .bar .btn {
         flex-shrink: 0;
       }
-      .note:hover .bar {
+
+      /* ---- Hover-only toolbar mode ---- */
+      /* The note clips nothing so the bar can protrude above the window edge. */
+      .note.toolbar-hover {
+        overflow: visible;
+      }
+
+      /* The bar leaves normal flow and parks above the window (top: -30px). */
+      .note.toolbar-hover .bar {
+        position: absolute;
+        top: -30px;
+        left: 0;
+        right: 0;
+        z-index: 10;
+        border-radius: 12px 12px 0 0;
+        opacity: 0;
+        transition:
+          top 0.18s ease,
+          opacity 0.1s ease;
+      }
+
+      /* Revealed: pulled flush with the window top edge. */
+      .note.toolbar-hover.bar-visible .bar {
+        top: 0;
         opacity: 1;
+      }
+
+      /* Invisible 30px hot-strip at the top of the note body that triggers reveal. */
+      .bar-hotzone {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 30px;
+        z-index: 5;
+        -webkit-app-region: no-drag;
+      }
+      .note.toolbar-hover .bar-hotzone {
+        display: block;
       }
 
       /* Click-through ("ghost") mode: keep the toolbar findable so you can turn it
@@ -512,7 +552,9 @@
         color: rgba(255, 255, 255, 0.4);
       }
       body.dark .bar {
-        background: rgba(255, 255, 255, 0.08);
+        background:
+          linear-gradient(rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08)),
+          rgb(var(--tint));
       }
       body.dark .btn {
         color: rgba(255, 255, 255, 0.7);
@@ -564,6 +606,7 @@
   </head>
   <body>
     <div class="note">
+      <div class="bar-hotzone" id="barHotzone"></div>
       <div class="bar">
         <div class="color-control">
           <button class="btn" id="colorBtn" title="Note color">
