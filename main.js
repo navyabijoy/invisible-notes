@@ -457,6 +457,7 @@ ipcMain.on("note:update", (e, payload) => {
     id,
     text,
     rightText,
+    columns,
     rich,
     images,
     color,
@@ -468,6 +469,7 @@ ipcMain.on("note:update", (e, payload) => {
   const patch = {};
   if (typeof text === "string") patch.text = text;
   if (typeof rightText === "string") patch.rightText = rightText;
+  if (columns === 1 || columns === 2) patch.columns = columns;
   if (typeof rich === "boolean") patch.rich = rich;
   if (Array.isArray(images)) {
     patch.images = images.filter(

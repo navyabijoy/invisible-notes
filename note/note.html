@@ -252,6 +252,10 @@
         flex: 1;
         min-height: 0;
       }
+      .note.single-column #textRight,
+      .note.single-column .column-divider {
+        display: none;
+      }
       .column-divider {
         flex: 0 0 1px;
         background: rgba(0, 0, 0, 0.25);
@@ -724,6 +728,15 @@
             </button>
           </div>
         </div>
+        <button
+          class="btn"
+          id="columns"
+          title="Switch to two columns"
+          aria-label="Use two columns"
+          aria-pressed="false"
+        >
+          1 ▯
+        </button>
         <button class="btn" id="fontDown" title="Smaller text">A−</button>
         <button class="btn" id="fontUp" title="Larger text">A+</button>
         <button

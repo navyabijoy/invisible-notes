@@ -643,3 +643,31 @@ test("both columns survive reload and backup import independently", () => {
   const imported = normalizeImport(JSON.parse(JSON.stringify(store.data)));
   assert.equal(imported[0].rightText, "<i>Right</i>");
 });
+
+test("new notes default to one column and existing v9 notes keep two", () => {
+  assert.equal(freshStore().create().columns, 1);
+  const legacy = freshStore({
+    version: 9,
+    notes: [{ id: "two", text: "Left", rightText: "Right" }],
+  });
+  assert.equal(legacy.get("two").columns, 2);
+  assert.equal(legacy.get("two").rightText, "Right");
+});
+
+test("single-column layout keeps hidden content through reload and backup", () => {
+  const dir = storeDir();
+  const store = openStore(dir);
+  const note = store.create({
+    columns: 2,
+    text: "Left",
+    rightText: "Keep hidden",
+  });
+  store.update(note.id, { columns: 1 });
+  store.flush();
+  const restored = openStore(dir).get(note.id);
+  assert.equal(restored.columns, 1);
+  assert.equal(restored.rightText, "Keep hidden");
+  const imported = normalizeImport(JSON.parse(JSON.stringify(store.data)));
+  assert.equal(imported[0].columns, 1);
+  assert.equal(imported[0].rightText, "Keep hidden");
+});

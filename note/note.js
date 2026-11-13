@@ -44,6 +44,7 @@ const bubble = document.getElementById("bubble");
 let state = {
   text: "",
   rightText: "",
+  columns: 1,
   color: "yellow",
   opacity: 0.85,
   fontSize: 15,
@@ -56,6 +57,28 @@ let state = {
 
 const noteEl = document.querySelector(".note");
 const barEl = document.querySelector(".bar");
+
+const columnsBtn = document.getElementById("columns");
+function applyColumns() {
+  const single = state.columns !== 2;
+  noteEl.classList.toggle("single-column", single);
+  columnsBtn.textContent = single ? "1 ▯" : "2 ▯▯";
+  columnsBtn.title = single ? "Switch to two columns" : "Switch to one column";
+  columnsBtn.setAttribute(
+    "aria-label",
+    single ? "Use two columns" : "Use one column",
+  );
+  columnsBtn.setAttribute("aria-pressed", String(!single));
+  if (single && textEl === editors[1]) {
+    textEl = editors[0];
+    textEl.focus();
+  }
+}
+columnsBtn.addEventListener("click", () => {
+  state.columns = state.columns === 2 ? 1 : 2;
+  applyColumns();
+  push();
+});
 
 // --- Click-through ("ghost") mode ---
 // When on, the note ignores mouse events (clicks reach whatever is behind it),
@@ -726,6 +749,7 @@ function applyState() {
   }
   hydrateImages();
 
+  applyColumns();
   applyCollapsed();
   applyGhost();
   applyPinned();
@@ -739,6 +763,7 @@ function push() {
     id,
     text: state.text,
     rightText: state.rightText,
+    columns: state.columns,
     rich: state.rich,
     images: state.images,
     color: state.color,

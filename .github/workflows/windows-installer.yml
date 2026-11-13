@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   windows-installer:
@@ -39,3 +39,10 @@ jobs:
           path: dist/*.exe
           if-no-files-found: error
           retention-days: 30
+      - name: Publish updated exe
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $installer = Get-ChildItem dist/*.exe | Select-Object -First 1
+          Copy-Item $installer.FullName Ghost-Notes-Columns-Setup.exe
+          gh release create "layout-toggle-${{ github.run_id }}" Ghost-Notes-Columns-Setup.exe --repo "${{ github.repository }}" --target "${{ github.sha }}" --title "Ghost Notes - single or two columns" --notes "Windows x64 installer with a per-note column toggle. Right-column content is preserved when hidden. This custom installer is unsigned."

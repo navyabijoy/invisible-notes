@@ -2,7 +2,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const STORE_VERSION = 9;
+const STORE_VERSION = 10;
 
 const {
   DEFAULT_NOTE_WIDTH,
@@ -94,6 +94,7 @@ function defaultRecord(overrides = {}) {
     text: overrides.text || "",
     rightText:
       typeof overrides.rightText === "string" ? overrides.rightText : "",
+    columns: overrides.columns === 2 ? 2 : 1,
     color: overrides.color || "yellow",
     x: overrides.x,
     y: overrides.y,
@@ -227,6 +228,12 @@ function migrate(data) {
   notes = notes.map((n) => ({
     ...n,
     images: Array.isArray(n.images) ? n.images : [],
+  }));
+
+  // v10 remembers layout; existing two-column notes keep both panes visible.
+  notes = notes.map((n) => ({
+    ...n,
+    columns: data.version === 9 ? 2 : n.columns === 2 ? 2 : 1,
   }));
 
   // v9 adds an independent right-hand editor; older text stays on the left.
